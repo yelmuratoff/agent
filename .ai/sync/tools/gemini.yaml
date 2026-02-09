@@ -1,0 +1,13 @@
+# Gemini CLI Configuration
+name: "Gemini CLI"
+enabled: true
+
+targets:
+  agents:
+    dest: ".gemini/GEMINI.md"
+
+  rules:
+    dest: ".gemini/prompts"
+
+  skills:
+    dest: ".gemini/skills"

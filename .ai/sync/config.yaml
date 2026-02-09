@@ -1,0 +1,12 @@
+# AI Sync Script - Global Configuration
+# Source paths (relative to repo root)
+
+source:
+  agents: ".ai/AGENTS.md"
+  rules: ".ai/rules"
+  skills: ".ai/skills"
+
+# Default settings for all tools
+defaults:
+  enabled: true
+  cleanup: true

@@ -1,0 +1,15 @@
+# Cursor Configuration
+name: "Cursor"
+enabled: false
+
+targets:
+  agents:
+    dest: ".cursor/AGENTS.md"
+
+  rules:
+    dest: ".cursor/rules"
+    extension: ".mdc"
+    header: "---\nglobs: '**/*'\nalwaysApply: true\n---"
+
+  skills:
+    dest: ".cursor/skills"

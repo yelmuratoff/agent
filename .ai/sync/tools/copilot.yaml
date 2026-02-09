@@ -1,0 +1,15 @@
+# GitHub Copilot Configuration
+name: "GitHub Copilot"
+enabled: true
+
+targets:
+  agents:
+    dest: ".github/copilot-instructions.md"
+
+  rules:
+    dest: ".github/instructions"
+    extension: ".instructions.md"
+    header: "---\napplyTo: '**'\n---"
+
+  skills:
+    dest: ".github/skills"

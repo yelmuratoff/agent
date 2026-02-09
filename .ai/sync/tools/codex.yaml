@@ -1,0 +1,13 @@
+# OpenAI Codex Configuration
+name: "OpenAI Codex"
+enabled: false
+
+targets:
+  agents:
+    dest: ".codex/AGENTS.md"
+
+  rules:
+    dest: ".codex/prompts"
+
+  skills:
+    dest: ".codex/skills"
