@@ -82,7 +82,7 @@ Apply changes to all tools:
 .ai/sync/sync.sh --help       # All options
 ```
 
-See [sync/README.md](sync/README.md).
+See [.ai/sync/README.md](.ai/sync/README.md).
 
 ## Quick Reference
 
