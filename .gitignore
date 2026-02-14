@@ -1,2 +1,6 @@
 tasks/
 knowledge/
+.gemini/
+.claude/
+.cursor/
+.agent/
