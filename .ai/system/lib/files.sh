@@ -56,31 +56,80 @@ copy_file() {
     log_step "$src → $dest"
 }
 
-# Copy directory recursively with cleanup (rm -rf + cp -r)
-# Usage: copy_dir "source_dir" "dest_dir" ["dry_run"]
-copy_dir() {
+# Sync directory recursively with safe differential cleanup
+# Usage: sync_dir "source_dir" "dest_dir" "dry_run" "include" "exclude"
+sync_dir() {
     local src="$1"
     local dest="$2"
     local dry_run="${3:-false}"
+    local include="${4:-}"
+    local exclude="${5:-}"
     
     if [[ ! -d "$src" ]]; then
         log_warning "Source directory not found: $src"
         return 1
     fi
     
+    ensure_dir "$dest"
+    
+    # 1. Identify valid source items (relative paths)
+    local source_items=""
+    local count_copy=0
+    
+    # Iterate source to find what to copy
+    for item in "$src"/*; do
+        [[ -e "$item" ]] || continue
+        local basename
+        basename=$(basename "$item")
+        
+        if matches_filter "$basename" "$include" "$exclude"; then
+            source_items="$source_items|$basename|"
+            
+            if [[ "$dry_run" == "true" ]]; then
+                ((count_copy++))
+            else
+                # Recursive copy (overwrite)
+                rm -rf "$dest/$basename" 2>/dev/null || true
+                cp -r "$item" "$dest/$basename"
+                ((count_copy++))
+            fi
+        fi
+    done
+    
+    # 2. Differential Cleanup
+    local count_clean=0
+    
+    for dest_item in "$dest"/*; do
+        [[ -e "$dest_item" ]] || continue
+        local basename
+        basename=$(basename "$dest_item")
+        
+        # Check if this item falls under our management (matches filter)
+        if matches_filter "$basename" "$include" "$exclude"; then
+             # It IS managed. Is it in source?
+             if [[ "$source_items" != *"|$basename|"* ]]; then
+                 # Managed but missing in source -> DELETE
+                 if [[ "$dry_run" == "true" ]]; then
+                     log_step "Would remove: $dest/$basename (extraneous)"
+                 else
+                     rm -rf "$dest_item"
+                     log_step "Removed: $dest/$basename"
+                 fi
+                 ((count_clean++))
+             fi
+        else
+            # Not managed (filtered out) -> Keep it
+            :
+        fi
+    done
+    
+    local extra=""
+    [[ -n "$include" ]] && extra="${extra}, include='$include'"
     if [[ "$dry_run" == "true" ]]; then
-        log_step "$src/ → $dest/ (dry-run)"
-        return 0
+        log_step "$src/ → $dest/ ($count_copy updates, $count_clean cleanups)${extra} (dry-run)"
+    else
+        log_step "$src/ → $dest/ ($count_copy updates, $count_clean cleanups)${extra}"
     fi
-    
-    # Ensure parent directory exists
-    ensure_dir "$(dirname "$dest")"
-    
-    # Cleanup and copy
-    rm -rf "$dest" 2>/dev/null || true
-    cp -r "$src" "$dest"
-    
-    log_step "$src/ → $dest/"
 }
 
 # Add header to file content
@@ -248,4 +297,107 @@ copy_rules() {
     local extra=""
     [[ -n "$header" ]] && extra="${extra}, +header"
     log_step "$src_dir/ → $dest_dir/ ($count files${extra})"
+}
+
+# Sync rules with safe differential sync
+# Usage: sync_rules "src_dir" "dest_dir" "new_extension" "header" "dry_run" "include" "exclude"
+sync_rules() {
+    local src_dir="$1"
+    local dest_dir="$2"
+    local new_ext="$3"
+    local header="$4"
+    local dry_run="${5:-false}"
+    local include="${6:-}"
+    local exclude="${7:-}"
+    
+    if [[ ! -d "$src_dir" ]]; then
+        log_warning "Rules source not found: $src_dir"
+        return 1
+    fi
+    
+    ensure_dir "$dest_dir"
+    
+    local valid_dest_files=""
+    local count_copy=0
+    local count_clean=0
+    
+    # 1. Copy & Track expected files
+    for src_file in "$src_dir"/*.md; do
+        [[ -f "$src_file" ]] || continue
+        local basename
+        basename=$(basename "$src_file")
+        
+        if matches_filter "$basename" "$include" "$exclude"; then
+            local dest_name
+            if [[ -n "$new_ext" ]]; then
+                dest_name="${basename%.md}${new_ext}"
+            else
+                dest_name="${basename}"
+            fi
+            
+            valid_dest_files="$valid_dest_files|$dest_name|"
+            
+            if [[ "$dry_run" == "true" ]]; then
+                ((count_copy++))
+            else
+                local dest_path="$dest_dir/$dest_name"
+                cp "$src_file" "$dest_path"
+                if [[ -n "$header" ]]; then
+                    add_header "$dest_path" "$header"
+                fi
+                ((count_copy++))
+            fi
+        fi
+    done
+    
+    # 2. Cleanup (Differential)
+    for dest_file in "$dest_dir"/*; do
+        [[ -f "$dest_file" ]] || continue
+        local basename
+        basename=$(basename "$dest_file")
+        
+        # Does this file LOOK like a rule?
+        local is_managed=false
+        
+        if [[ -n "$new_ext" ]]; then
+            if [[ "$basename" == *"$new_ext" ]]; then
+                is_managed=true
+            fi
+        else
+            if [[ "$basename" == *.md ]]; then
+                is_managed=true
+            fi
+        fi
+        
+        if [[ "$is_managed" == "true" ]]; then
+            if [[ "$valid_dest_files" != *"|$basename|"* ]]; then
+                # Potentially checking filter reverse logic
+                local src_basename=""
+                if [[ -n "$new_ext" ]]; then
+                    src_basename="${basename%$new_ext}.md"
+                else
+                    src_basename="$basename"
+                fi
+                
+                # Only delete if it would have been included by our filter
+                if matches_filter "$src_basename" "$include" "$exclude"; then
+                   if [[ "$dry_run" == "true" ]]; then
+                       log_step "Would remove: $dest_dir/$basename (obsolete)"
+                   else
+                       rm -f "$dest_file"
+                       log_step "Removed: $dest_dir/$basename"
+                   fi
+                   ((count_clean++))
+                fi
+            fi
+        fi
+    done
+    
+    local extra=""
+    [[ -n "$include" ]] && extra="${extra}, include='$include'"
+    if [[ "$dry_run" == "true" ]]; then
+        log_step "$src_dir/ → $dest_dir/ ($count_copy updates, $count_clean cleanups)${extra} (dry-run)"
+    else
+        log_step "$src_dir/ → $dest_dir/ ($count_copy updates, $count_clean cleanups)${extra}"
+    fi
 }

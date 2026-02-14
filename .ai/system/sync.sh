@@ -145,10 +145,27 @@ sync_tool() {
     
     # Load global config paths
     local global_config="$SCRIPT_DIR/config.yaml"
-    local src_agents src_rules src_skills
-    src_agents=$(parse_yaml_value "$global_config" "source.agents")
-    src_rules=$(parse_yaml_value "$global_config" "source.rules")
-    src_skills=$(parse_yaml_value "$global_config" "source.skills")
+    local global_src_agents global_src_rules global_src_skills
+    global_src_agents=$(parse_yaml_value "$global_config" "source.agents")
+    global_src_rules=$(parse_yaml_value "$global_config" "source.rules")
+    global_src_skills=$(parse_yaml_value "$global_config" "source.skills")
+    
+    # 1. AGENTS
+    # Check for override
+    local override_agents src_agents
+    override_agents=$(parse_yaml_value "$tool_config" "targets.agents.source")
+    src_agents="${override_agents:-$global_src_agents}"
+    
+    # Sync AGENTS.md
+    if [[ -n "$dest_agents" ]]; then
+        copy_file "$REPO_ROOT/$src_agents" "$REPO_ROOT/$dest_agents" "$DRY_RUN"
+    fi
+    
+    # 2. RULES
+    # Check for override
+    local override_rules src_rules
+    override_rules=$(parse_yaml_value "$tool_config" "targets.rules.source")
+    src_rules="${override_rules:-$global_src_rules}"
     
     # Read optional rule transformations and filters
     local rule_ext rule_header append_imports rule_include rule_exclude
@@ -158,14 +175,9 @@ sync_tool() {
     rule_include=$(parse_yaml_value "$tool_config" "targets.rules.include") || true
     rule_exclude=$(parse_yaml_value "$tool_config" "targets.rules.exclude") || true
     
-    # Sync AGENTS.md
-    if [[ -n "$dest_agents" ]]; then
-        copy_file "$REPO_ROOT/$src_agents" "$REPO_ROOT/$dest_agents" "$DRY_RUN"
-    fi
-    
     # Sync rules
     if [[ -n "$dest_rules" ]]; then
-        copy_rules "$REPO_ROOT/$src_rules" "$REPO_ROOT/$dest_rules" "$rule_ext" "$rule_header" "$DRY_RUN" "$rule_include" "$rule_exclude"
+        sync_rules "$REPO_ROOT/$src_rules" "$REPO_ROOT/$dest_rules" "$rule_ext" "$rule_header" "$DRY_RUN" "$rule_include" "$rule_exclude"
         
         # Handle Claude's import appending
         if [[ "$append_imports" == "true" ]] && [[ "$DRY_RUN" != "true" ]]; then
@@ -176,11 +188,32 @@ sync_tool() {
         fi
     fi
     
+    # 3. SKILLS
+    # Check for override
+    local override_skills src_skills
+    override_skills=$(parse_yaml_value "$tool_config" "targets.skills.source")
+    src_skills="${override_skills:-$global_src_skills}"
+    
+    # Read skill filters
+    local skills_include skills_exclude
+    skills_include=$(parse_yaml_value "$tool_config" "targets.skills.include") || true
+    skills_exclude=$(parse_yaml_value "$tool_config" "targets.skills.exclude") || true
+    
     # Sync skills directory
     if [[ -n "$dest_skills" ]]; then
-        copy_dir "$REPO_ROOT/$src_skills" "$REPO_ROOT/$dest_skills" "$DRY_RUN"
+        sync_dir "$REPO_ROOT/$src_skills" "$REPO_ROOT/$dest_skills" "$DRY_RUN" "$skills_include" "$skills_exclude"
     fi
     
+    # 4. POST_SYNC
+    local post_sync_cmd
+    post_sync_cmd=$(parse_yaml_value "$tool_config" "post_sync") || true
+    
+    if [[ -n "$post_sync_cmd" ]] && [[ "$DRY_RUN" != "true" ]]; then
+        log_info "Running post-sync hook: $post_sync_cmd"
+        # Eval command in repo root
+        (cd "$REPO_ROOT" && eval "$post_sync_cmd") || log_warning "Post-sync hook failed"
+    fi
+     
     log_success "$tool_name complete"
     ((SYNCED_COUNT++)) || true
 }

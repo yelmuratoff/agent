@@ -14,6 +14,9 @@ targets:
     # Destination path relative to repo root
     dest: ".tool/AGENTS.md"
 
+    # Optional: Override source file (default is .ai/src/AGENTS.md)
+    # source: ".ai/src/AGENTS.tiny.md"
+
   # The "Rules" directory
   rules:
     # Destination directory for rule files
@@ -29,6 +32,9 @@ targets:
     # include: "flutter-*.md"
     # exclude: "secret-*.md"
 
+    # Optional: Override source file (default is .ai/src/rules)
+    # source: ".ai/src/my-rules"
+
     # Optional: Append imports to the main AGENTS file (Claude-specific)
     # append_imports: false
 
@@ -36,3 +42,13 @@ targets:
   skills:
     # Destination directory for skill folders
     dest: ".tool/skills"
+
+    # Optional: Filter skills (folders)
+    # include: "flutter*"
+    # exclude: "python*"
+
+    # Optional: Override source directory
+    # source: ".ai/src/my-skills"
+
+# Optional: Command to run after sync (e.g. linter or formatter)
+# post_sync: "npx prettier --write .tool/rules/*.mdc"
