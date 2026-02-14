@@ -140,15 +140,49 @@ append_imports() {
     } >> "$agents_file"
 }
 
-# Copy rules with optional extension change and header
-# Usage: copy_rules "src_dir" "dest_dir" "new_extension" "header" "dry_run"
-# Pass empty string "" for new_extension or header to skip
+# Check if file matches include/exclude patterns
+# Usage: matches_filter "filename" "include_glob" "exclude_glob"
+matches_filter() {
+    local filename="$1"
+    local include="$2"
+    local exclude="$3"
+    
+    # Default to match if no include pattern
+    local matches_include=true
+    if [[ -n "$include" ]]; then
+        # Check against include pattern
+        # shellcheck disable=SC2053
+        if [[ $filename != $include ]]; then
+            matches_include=false
+        fi
+    fi
+    
+    # Check exclude pattern
+    if [[ -n "$exclude" ]]; then
+        # shellcheck disable=SC2053
+        if [[ $filename == $exclude ]]; then
+            return 1 # Excluded
+        fi
+    fi
+    
+    if [[ "$matches_include" == "true" ]]; then
+        return 0 # Matched
+    else
+        return 1 # Not matched
+    fi
+}
+
+# Copy rules with optional extension change, header, and filtering
+# Usage: copy_rules "src_dir" "dest_dir" "new_extension" "header" "dry_run" "include" "exclude"
+# Pass empty string "" for optional args to skip
 copy_rules() {
     local src_dir="$1"
     local dest_dir="$2"
     local new_ext="$3"
     local header="$4"
     local dry_run="${5:-false}"
+    local include="${6:-}"
+    local exclude="${7:-}"
     local count=0
     
     if [[ ! -d "$src_dir" ]]; then
@@ -156,32 +190,45 @@ copy_rules() {
         return 1
     fi
     
+    # Prepare list of files to process (for counting in dry-run)
+    local files_to_process=()
+    for src_file in "$src_dir"/*.md; do
+        [[ -f "$src_file" ]] || continue
+        
+        local basename
+        basename=$(basename "$src_file")
+        
+        if matches_filter "$basename" "$include" "$exclude"; then
+            files_to_process+=("$src_file")
+        fi
+    done
+    
     if [[ "$dry_run" == "true" ]]; then
-        # Count files for dry-run output
-        for src_file in "$src_dir"/*.md; do
-            [[ -f "$src_file" ]] && ((count++)) || true
-        done
         local extra=""
-        [[ -n "$header" ]] && extra=", +header"
-        log_step "$src_dir/ → $dest_dir/ ($count files${extra}) (dry-run)"
+        [[ -n "$header" ]] && extra="${extra}, +header"
+        [[ -n "$include" ]] && extra="${extra}, include='$include'"
+        [[ -n "$exclude" ]] && extra="${extra}, exclude='$exclude'"
+        
+        log_step "$src_dir/ → $dest_dir/ (${#files_to_process[@]} files${extra}) (dry-run)"
         return 0
     fi
     
     # Ensure destination exists
+    # We don't wipe the whole directory if filtering is used, to allow mixing sources?
+    # No, clean sync philosophy says we own the directory. Filtering is for what goes IN.
+    # But if we have multiple sources filling one dir, full wipe hurts.
+    # For now, stick to simple "wipe and fill" logic. if filtering reduces set, so be it.
     rm -rf "$dest_dir" 2>/dev/null || true
     ensure_dir "$dest_dir"
     
-    # Process each .md file
-    for src_file in "$src_dir"/*.md; do
-        [[ -f "$src_file" ]] || continue
-        
+    # Process valid files
+    for src_file in "${files_to_process[@]}"; do
         local basename
         basename=$(basename "$src_file")
         local dest_file
         
         # Handle extension change
         if [[ -n "$new_ext" ]]; then
-            # Replace .md with new extension
             dest_file="${dest_dir}/${basename%.md}${new_ext}"
         else
             dest_file="${dest_dir}/${basename}"
@@ -199,6 +246,6 @@ copy_rules() {
     done
     
     local extra=""
-    [[ -n "$header" ]] && extra=", +header"
+    [[ -n "$header" ]] && extra="${extra}, +header"
     log_step "$src_dir/ → $dest_dir/ ($count files${extra})"
 }

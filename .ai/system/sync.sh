@@ -150,11 +150,13 @@ sync_tool() {
     src_rules=$(parse_yaml_value "$global_config" "source.rules")
     src_skills=$(parse_yaml_value "$global_config" "source.skills")
     
-    # Read optional rule transformations
-    local rule_ext rule_header append_imports
+    # Read optional rule transformations and filters
+    local rule_ext rule_header append_imports rule_include rule_exclude
     rule_ext=$(parse_yaml_value "$tool_config" "targets.rules.extension") || true
     rule_header=$(parse_yaml_value "$tool_config" "targets.rules.header") || true
     append_imports=$(parse_yaml_value "$tool_config" "targets.rules.append_imports") || true
+    rule_include=$(parse_yaml_value "$tool_config" "targets.rules.include") || true
+    rule_exclude=$(parse_yaml_value "$tool_config" "targets.rules.exclude") || true
     
     # Sync AGENTS.md
     if [[ -n "$dest_agents" ]]; then
@@ -163,10 +165,12 @@ sync_tool() {
     
     # Sync rules
     if [[ -n "$dest_rules" ]]; then
-        copy_rules "$REPO_ROOT/$src_rules" "$REPO_ROOT/$dest_rules" "$rule_ext" "$rule_header" "$DRY_RUN"
+        copy_rules "$REPO_ROOT/$src_rules" "$REPO_ROOT/$dest_rules" "$rule_ext" "$rule_header" "$DRY_RUN" "$rule_include" "$rule_exclude"
         
         # Handle Claude's import appending
         if [[ "$append_imports" == "true" ]] && [[ "$DRY_RUN" != "true" ]]; then
+            # Note: Imports should technically only include filtered rules, but append_imports scans the DEST dir
+            # so it naturally picks up only what was copied. Correct.
             append_imports "$REPO_ROOT/$dest_agents" "$REPO_ROOT/$dest_rules"
             log_step "Appended @rules imports to $dest_agents"
         fi

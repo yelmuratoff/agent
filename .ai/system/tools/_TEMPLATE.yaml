@@ -25,6 +25,10 @@ targets:
     # Optional: Add a header to the top of every rule file
     # header: 'globs: "**/*"'
 
+    # Optional: Filter rules (bash globs)
+    # include: "flutter-*.md"
+    # exclude: "secret-*.md"
+
     # Optional: Append imports to the main AGENTS file (Claude-specific)
     # append_imports: false
 
