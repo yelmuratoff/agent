@@ -8,6 +8,7 @@ targets:
 
   rules:
     dest: ".claude/rules"
+    # Append @rules/* imports to CLAUDE.md (Claude-specific behavior)
     append_imports: true
 
   skills:

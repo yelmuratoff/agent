@@ -1,0 +1,34 @@
+# Template for AI Tool Configuration
+# Copy this file to "toolname.yaml" to add a new tool.
+
+# Name of the tool (displayed in logs)
+name: "Tool Name"
+
+# Enable or disable synchronization for this tool
+enabled: false
+
+# Define where files should be copied
+targets:
+  # The "Identity" file (AGENTS.md)
+  agents:
+    # Destination path relative to repo root
+    dest: ".tool/AGENTS.md"
+
+  # The "Rules" directory
+  rules:
+    # Destination directory for rule files
+    dest: ".tool/rules"
+
+    # Optional: Change file extension (default: keep original .md)
+    # extension: ".mdc"
+
+    # Optional: Add a header to the top of every rule file
+    # header: 'globs: "**/*"'
+
+    # Optional: Append imports to the main AGENTS file (Claude-specific)
+    # append_imports: false
+
+  # The "Skills" directory
+  skills:
+    # Destination directory for skill folders
+    dest: ".tool/skills"

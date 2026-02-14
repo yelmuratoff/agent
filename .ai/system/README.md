@@ -14,6 +14,33 @@ Syncs `.ai/src/` configs to all AI tool directories.
 └── skills/         # Skill folders → copied as-is
 ```
 
+### Tool Configuration
+
+Each tool in `tools/*.yaml` defines how to map the source files to the tool's expected format.
+
+**Template:**
+See [`tools/_TEMPLATE.yaml`](tools/_TEMPLATE.yaml) for a fully commented example.
+
+**Schema Reference:**
+
+```yaml
+name: "My Tool" # Display name for logs
+enabled: true # Set false to disable sync
+
+targets:
+  agents:
+    dest: ".tool/AGENTS.md" # Where to put the identity file
+
+  rules:
+    dest: ".tool/rules" # Where to put rule files
+    extension: ".mdc" # Optional: Change file extension
+    header: "..." # Optional: Prepend text to every rule
+    append_imports: true # Optional: Add @rule imports to AGENTS file
+
+  skills:
+    dest: ".tool/skills" # Where to put skill folders
+```
+
 ## Usage
 
 ### 1. Synchronization (Local)

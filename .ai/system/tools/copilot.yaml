@@ -8,6 +8,7 @@ targets:
 
   rules:
     dest: ".github/instructions"
+    # Rename to .instructions.md for Copilot
     extension: ".instructions.md"
     header: "---\napplyTo: '**'\n---"
 
