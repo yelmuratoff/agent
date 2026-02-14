@@ -2,6 +2,9 @@
 
 Syncs `.ai/` configs to all AI tool directories.
 
+> **User Manual**: For high-level philosophy and writing guides, see [../README.md](../README.md).
+> This document covers technical details, configuration schema, and tooling.
+
 ## Source
 
 ```
@@ -14,12 +17,15 @@ Syncs `.ai/` configs to all AI tool directories.
 ## Usage
 
 ### 1. Synchronization (Local)
+
 To generate configurations for all enabled tools:
+
 ```bash
 .ai/sync/sync.sh
 ```
 
 ### 2. Git Strategy (Recommended)
+
 We commit the generated configurations to Git to ensure all team members stay in sync without running scripts manually.
 
 1.  Run `sync.sh` after modifying `.ai/` contents.
@@ -27,22 +33,25 @@ We commit the generated configurations to Git to ensure all team members stay in
 3.  Team members effectively get updates via `git pull`.
 
 ### 3. CI / Validation
+
 To verify that configurations are in sync (e.g., in CI or pre-commit hook):
+
 ```bash
 .ai/sync/check.sh
 ```
+
 This script exits with `0` if synced, `1` if changes are detected.
 
 ## Targets
 
-| Tool        | AGENTS.md                         | Rules                              | Skills            |
-|-------------|-----------------------------------|------------------------------------|-------------------|
-| Claude      | `.claude/CLAUDE.md`               | `.claude/rules/` + imports         | `.claude/skills/` |
+| Tool        | AGENTS.md                         | Rules                                    | Skills            |
+| ----------- | --------------------------------- | ---------------------------------------- | ----------------- |
+| Claude      | `.claude/CLAUDE.md`               | `.claude/rules/` + imports               | `.claude/skills/` |
 | Copilot     | `.github/copilot-instructions.md` | `.github/instructions/*.instructions.md` | `.github/skills/` |
-| Cursor      | `.cursor/AGENTS.md`               | `.cursor/rules/*.mdc`              | `.cursor/skills/` |
-| Gemini      | `.gemini/GEMINI.md`               | `.gemini/prompts/`                 | `.gemini/skills/` |
-| Antigravity | `.agent/AGENTS.md`                | `.agent/rules/`                    | `.agent/skills/`  |
-| Codex       | `.codex/AGENTS.md`                | `.codex/prompts/`                  | `.codex/skills/`  |
+| Cursor      | `.cursor/AGENTS.md`               | `.cursor/rules/*.mdc`                    | `.cursor/skills/` |
+| Gemini      | `.gemini/GEMINI.md`               | `.gemini/prompts/`                       | `.gemini/skills/` |
+| Antigravity | `.agent/AGENTS.md`                | `.agent/rules/`                          | `.agent/skills/`  |
+| Codex       | `.codex/AGENTS.md`                | `.codex/prompts/`                        | `.codex/skills/`  |
 
 ## Config
 
@@ -65,9 +74,9 @@ targets:
     dest: ".tool/AGENTS.md"
   rules:
     dest: ".tool/rules"
-    extension: ".mdc"             # Optional: .md → .mdc
-    header: 'globs: "**/*"'       # Optional: prepend to each file
-    append_imports: true          # Optional: add @rules/* to agents file
+    extension: ".mdc" # Optional: .md → .mdc
+    header: 'globs: "**/*"' # Optional: prepend to each file
+    append_imports: true # Optional: add @rules/* to agents file
   skills:
     dest: ".tool/skills"
 ```

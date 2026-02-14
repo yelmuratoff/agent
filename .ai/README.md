@@ -1,101 +1,98 @@
-# AI Agent Configuration
+# AI Configuration Manual
 
-`.ai/` is the single source of truth for all agent configs. Never edit tool directories directly.
+The `.ai/` directory is the **Single Source of Truth (SSOT)** for all AI agent behaviors, rules, and skills in this repository.
 
-## Structure
+## 🧠 Philosophy
+
+Instead of configuring each AI tool (Cursor, Copilot, Claude, etc.) individually, we define **everything** here.
+The **Sync System** then propagates these configs to the specific locations required by each tool (e.g., `.cursor/rules`, `.github/copilot-instructions.md`).
+
+**Benefits:**
+
+- **Consistency:** All agents follow the same rules.
+- **Maintainability:** Change a rule once, update everywhere.
+- **Scalability:** Easily add new tools or shared skills.
+
+## 📂 Structure
 
 ```
 .ai/
-├── AGENTS.md      # WHO: Identity, mindset, philosophy
-├── rules/         # WHAT: Constraints, < 50 lines/file, no code
-└── skills/        # HOW: Recipes with code, loaded on-demand
+├── AGENTS.md       # WHO: Identity, mindset, and core philosophy.
+├── rules/          # WHAT: Hard constraints and context.
+├── skills/         # HOW: Step-by-step capabilities with code.
+└── sync/           # SYSTEM: Tools to propagate configs.
 ```
 
-## AGENTS.md
+## 📝 How to Write Configurations
 
-Agent identity and philosophy. Highest priority, always active.
+### 1. AGENTS.md (The "Who")
 
-**Contains:** Mindset, approach, decision-making principles. Minimal code.  
-**Size:** 100-200 lines
+This file defines the persona and high-level approach of the AI.
 
-## Rules (`rules/*.md`)
+- **Focus:** Mindset, philosophy, decision-making frameworks (e.g., "Favor composition over inheritance").
+- **Content:** Abstract principles, not specific tech recipes.
+- **Size:** Keep it under 200 lines to save context window.
 
-Hard constraints. Always active, high priority.
+### 2. Rules (The "What")
 
-**Contains:** Strict rules, restrictions, requirements. No code.  
-**Size:** < 50 lines per file
+Located in `.ai/rules/*.md`. These are **hard constraints** and **context** that must always be active.
 
-For example:
+- **Focus:** "Do this," "Don't do that," "Project structure is X."
+- **Content:**
+  - Naming conventions.
+  - Architectural boundaries.
+  - Forbidden patterns (e.g., "No `print` statements").
+- **Constraints:**
+  - **No Code Blocks:** Use pseudocode or short snippets if absolutely necessary. Logic belongs in Skills.
+  - **Short:** < 50 lines per file.
+  - **Modular:** One file per topic (e.g., `performance.md`, `testing.md`).
 
-```
-rules/
-├── core.md             # Generators, tests, security
-├── architecture.md     # Layer separation
-├── bloc.md             # Sealed classes, handleException
-├── data-persistence.md # How to use Drift
-├── logging.md          # Logger
-├── analytics.md        # How to use analytics_gen
-└── di.md               # How to use Scope widgets
-```
+### 3. Skills (The "How")
 
-## Skills (`skills/*/SKILL.md`)
+Located in `.ai/skills/*/SKILL.md`. These are **on-demand recipes** that the agent loads when needed.
 
-Step-by-step recipes with code. Loaded when relevant.
+- **Focus:** "How to implement X," "How to run Y."
+- **Content:**
+  - Step-by-step instructions.
+  - Full code templates.
+  - Command-line examples.
+- **Structure:**
+  - Each skill is a folder: `.ai/skills/<skill-name>/`.
+  - Main file: `SKILL.md` (Frontmatter + Markdown).
+  - Can contain resource files (templates, scripts) in the folder.
 
-**Contains:** Templates, commands, full code examples
+## 🔄 The Sync System
 
-For example:
+The sync system ensures your `.ai/` configs are applied to all tools.
 
-```
-skills/
-├── analytics/SKILL.md
-├── architecture/SKILL.md
-├── bloc/SKILL.md
-├── database/SKILL.md
-├── di/SKILL.md
-└── logging/SKILL.md
-```
+### Why Sync?
 
-**Format:**
+Different tools expect configs in different formats:
 
-```markdown
----
-name: skill-name
-description: When to use.
----
+- **Cursor** wants individual `.mdc` files in `.cursor/rules/`.
+- **Copilot** wants a single `.github/copilot-instructions.md`.
+- **Claude** wants a `.claude/CLAUDE.md`.
 
-# Title
+Transitioning manually is error-prone. The sync script handles transformation and copying.
 
-## When to use
+### How to Sync
 
-## Steps
-```
-
-## Sync
-
-Apply changes to all tools:
+Run the sync script from the repository root:
 
 ```bash
-.ai/sync/sync.sh              # Sync all
-.ai/sync/sync.sh --dry-run    # Preview
-.ai/sync/sync.sh --only X     # Specific tools
-.ai/sync/sync.sh --help       # All options
+# Sync all tools
+.ai/sync/sync.sh
+
+# Preview changes (Dry Run)
+.ai/sync/sync.sh --dry-run
+
+# Sync specific tools only
+.ai/sync/sync.sh --only cursor,copilot
 ```
 
-See [sync/README.md](sync/README.md).
+### Manual vs Automated
 
-## Quick Reference
+- **Recommended:** Run `sync.sh` before every commit if you changed `.ai/` files.
+- **CI/CD:** Use `.ai/sync/check.sh` in your CI pipeline to ensure everything is in sync.
 
-| Tier      | Purpose     | Size            | Code    | Priority  |
-| --------- | ----------- | --------------- | ------- | --------- |
-| AGENTS.md | Identity    | 100-200         | Minimal | Highest   |
-| Rules     | Constraints | < 50 lines/file | None    | High      |
-| Skills    | Recipes     | Unlimited       | Full    | On-demand |
-
-## Guidelines
-
-1. AGENTS.md — philosophy, not instructions
-2. Rules — short, strict, no code
-3. Skills — full code, templates
-4. Don't duplicate between tiers
-5. Update rules and related skills together
+For more details on the sync internals, see [.ai/sync/README.md](sync/README.md).
