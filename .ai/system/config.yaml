@@ -2,9 +2,9 @@
 # Source paths (relative to repo root)
 
 source:
-  agents: ".ai/AGENTS.md"
-  rules: ".ai/rules"
-  skills: ".ai/skills"
+  agents: ".ai/src/AGENTS.md"
+  rules: ".ai/src/rules"
+  skills: ".ai/src/skills"
 
 # Default settings for all tools
 defaults:

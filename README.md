@@ -77,16 +77,16 @@ Keep your tools in sync with the clean repo workflow:
 
 1.  **One-time Setup:**
     ```bash
-    .ai/sync/setup_hooks.sh
+    .ai/system/setup_hooks.sh
     ```
 2.  **Usage:**
     Just `git pull` or `git checkout`. The sync runs automatically.
     You can still run manually if needed:
     ```bash
-    .ai/sync/sync.sh
+    .ai/system/sync.sh
     ```
 
-See [.ai/sync/README.md](.ai/sync/README.md).
+See [.ai/system/README.md](.ai/system/README.md).
 
 ## Quick Reference
 

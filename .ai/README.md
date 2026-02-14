@@ -17,10 +17,13 @@ The **Sync System** then propagates these configs to the specific locations requ
 
 ```
 .ai/
-├── AGENTS.md       # WHO: Identity, mindset, and core philosophy.
-├── rules/          # WHAT: Hard constraints and context.
-├── skills/         # HOW: Step-by-step capabilities with code.
-└── sync/           # SYSTEM: Tools to propagate configs.
+├── src/                # INPUTS: Source of truth (edit this).
+│   ├── AGENTS.md       # Identity and philosophy.
+│   ├── rules/          # Rules and constraints.
+│   └── skills/         # Capabilities and recipes.
+│
+├── system/             # SYSTEM: Sync logic and tooling (do not edit).
+└── README.md           # This manual.
 ```
 
 ## 📝 How to Write Configurations
@@ -35,7 +38,7 @@ This file defines the persona and high-level approach of the AI.
 
 ### 2. Rules (The "What")
 
-Located in `.ai/rules/*.md`. These are **hard constraints** and **context** that must always be active.
+Located in `.ai/src/rules/*.md`. These are **hard constraints** and **context** that must always be active.
 
 - **Focus:** "Do this," "Don't do that," "Project structure is X."
 - **Content:**
@@ -49,7 +52,7 @@ Located in `.ai/rules/*.md`. These are **hard constraints** and **context** that
 
 ### 3. Skills (The "How")
 
-Located in `.ai/skills/*/SKILL.md`. These are **on-demand recipes** that the agent loads when needed.
+Located in `.ai/src/skills/*/SKILL.md`. These are **on-demand recipes** that the agent loads when needed.
 
 - **Focus:** "How to implement X," "How to run Y."
 - **Content:**
@@ -57,7 +60,7 @@ Located in `.ai/skills/*/SKILL.md`. These are **on-demand recipes** that the age
   - Full code templates.
   - Command-line examples.
 - **Structure:**
-  - Each skill is a folder: `.ai/skills/<skill-name>/`.
+  - Each skill is a folder: `.ai/src/skills/<skill-name>/`.
   - Main file: `SKILL.md` (Frontmatter + Markdown).
   - Can contain resource files (templates, scripts) in the folder.
 
@@ -81,13 +84,13 @@ Run the sync script from the repository root:
 
 ```bash
 # Sync all tools
-.ai/sync/sync.sh
+.ai/system/sync.sh
 
 # Preview changes (Dry Run)
-.ai/sync/sync.sh --dry-run
+.ai/system/sync.sh --dry-run
 
 # Sync specific tools only
-.ai/sync/sync.sh --only cursor,copilot
+.ai/system/sync.sh --only cursor,copilot
 ```
 
 ### 4. Clean Sync Workflow (Recommended)
@@ -98,16 +101,16 @@ To keep your repository clean and ensure everyone has the latest configs:
     Run the setup script to install git hooks. This ensures `sync.sh` runs automatically on `git pull` or `checkout`.
 
     ```bash
-    .ai/sync/setup_hooks.sh
+    .ai/system/setup_hooks.sh
     ```
 
 2.  **Gitignore:**
     The `.gitignore` is configured to exclude generated files (like `.cursor/rules/`) but allow manual configs (like `.cursor/settings.json`) to be committed.
 
 3.  **Workflow:**
-    - Edit files in `.ai/`.
-    - Run `.ai/sync/sync.sh` to test locally.
-    - Commit changes to `.ai/`.
+    - Edit files in `.ai/src/`.
+    - Run `.ai/system/sync.sh` to test locally.
+    - Commit changes to `.ai/src/`.
     - When teammates pull, their local tools update automatically.
 
 ### Manual Usage
@@ -115,12 +118,12 @@ To keep your repository clean and ensure everyone has the latest configs:
 If you don't use hooks, run the sync script manually after pulling changes:
 
 ```bash
-.ai/sync/sync.sh
+.ai/system/sync.sh
 ```
 
 ### Manual vs Automated (CI/CD)
 
 - **Recommended:** Use the Clean Sync Workflow above.
-- **CI/CD:** Use `.ai/sync/check.sh` in your CI pipeline to ensure everything is in sync.
+- **CI/CD:** Use `.ai/system/check.sh` in your CI pipeline to ensure everything is in sync.
 
-For more details on the sync internals, see [.ai/sync/README.md](sync/README.md).
+For more details on the sync internals, see [.ai/system/README.md](system/README.md).
