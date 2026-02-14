@@ -32,7 +32,23 @@ We commit the generated configurations to Git to ensure all team members stay in
 2.  Commit the changes (both `.ai/` source and generated targets).
 3.  Team members effectively get updates via `git pull`.
 
-### 3. CI / Validation
+### 3. Automated Sync (Hooks)
+
+Install Git hooks to sync automatically on `pull` and `checkout`:
+
+```bash
+.ai/sync/setup_hooks.sh
+```
+
+### 4. Dynamic Gitignore
+
+`sync.sh` automatically updates `.gitignore` to exclude generated artifacts.
+
+- It looks for `tool.yaml` configs with `enabled: true`.
+- It updates the block between `# --- AI SYNC GENERATED START ---` markers.
+- Manual entries in `.gitignore` are preserved.
+
+### 5. CI / Validation
 
 To verify that configurations are in sync (e.g., in CI or pre-commit hook):
 

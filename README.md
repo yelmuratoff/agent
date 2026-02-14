@@ -73,14 +73,18 @@ description: When to use.
 
 ## Sync
 
-Apply changes to all tools:
+Keep your tools in sync with the clean repo workflow:
 
-```bash
-.ai/sync/sync.sh              # Sync all
-.ai/sync/sync.sh --dry-run    # Preview
-.ai/sync/sync.sh --only X     # Specific tools
-.ai/sync/sync.sh --help       # All options
-```
+1.  **One-time Setup:**
+    ```bash
+    .ai/sync/setup_hooks.sh
+    ```
+2.  **Usage:**
+    Just `git pull` or `git checkout`. The sync runs automatically.
+    You can still run manually if needed:
+    ```bash
+    .ai/sync/sync.sh
+    ```
 
 See [.ai/sync/README.md](.ai/sync/README.md).
 
