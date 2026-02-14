@@ -16,6 +16,8 @@ source "$SCRIPT_DIR/lib/logging.sh"
 source "$SCRIPT_DIR/lib/files.sh"
 # shellcheck source=lib/yaml.sh
 source "$SCRIPT_DIR/lib/yaml.sh"
+# shellcheck source=lib/gitignore.sh
+source "$SCRIPT_DIR/lib/gitignore.sh"
 
 # Global variables
 DRY_RUN="false"
@@ -207,12 +209,35 @@ main() {
     fi
     
     # Process each tool config
+    local generated_paths=""
     for tool_config in "$SCRIPT_DIR/tools"/*.yaml; do
         [[ -f "$tool_config" ]] || continue
         ((TOTAL_COUNT++)) || true
+        
+        # Check enabled status for gitignore collection even if skipping sync (for dry-run accuracy we might need to think, 
+        # but here we follow config truth)
+        if parse_yaml_bool "$tool_config" "enabled"; then
+             # Collect paths for gitignore
+             local d_agents d_rules d_skills
+             d_agents=$(parse_yaml_value "$tool_config" "targets.agents.dest")
+             d_rules=$(parse_yaml_value "$tool_config" "targets.rules.dest")
+             d_skills=$(parse_yaml_value "$tool_config" "targets.skills.dest")
+             
+             [[ -n "$d_agents" ]] && generated_paths="$generated_paths $d_agents"
+             [[ -n "$d_rules" ]] && generated_paths="$generated_paths $d_rules/"
+             [[ -n "$d_skills" ]] && generated_paths="$generated_paths $d_skills/"
+        fi
+
         sync_tool "$tool_config"
         echo ""
     done
+    
+    # Update .gitignore if not dry-run
+    if [[ "$DRY_RUN" != "true" ]]; then
+        log_separator
+        log_info "Updating .gitignore..."
+        update_gitignore "$REPO_ROOT/.gitignore" "$generated_paths"
+    fi
     
     # Print summary
     log_separator

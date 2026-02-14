@@ -90,9 +90,37 @@ Run the sync script from the repository root:
 .ai/sync/sync.sh --only cursor,copilot
 ```
 
-### Manual vs Automated
+### 4. Clean Sync Workflow (Recommended)
 
-- **Recommended:** Run `sync.sh` before every commit if you changed `.ai/` files.
+To keep your repository clean and ensure everyone has the latest configs:
+
+1.  **Setup (Once):**
+    Run the setup script to install git hooks. This ensures `sync.sh` runs automatically on `git pull` or `checkout`.
+
+    ```bash
+    .ai/sync/setup_hooks.sh
+    ```
+
+2.  **Gitignore:**
+    The `.gitignore` is configured to exclude generated files (like `.cursor/rules/`) but allow manual configs (like `.cursor/settings.json`) to be committed.
+
+3.  **Workflow:**
+    - Edit files in `.ai/`.
+    - Run `.ai/sync/sync.sh` to test locally.
+    - Commit changes to `.ai/`.
+    - When teammates pull, their local tools update automatically.
+
+### Manual Usage
+
+If you don't use hooks, run the sync script manually after pulling changes:
+
+```bash
+.ai/sync/sync.sh
+```
+
+### Manual vs Automated (CI/CD)
+
+- **Recommended:** Use the Clean Sync Workflow above.
 - **CI/CD:** Use `.ai/sync/check.sh` in your CI pipeline to ensure everything is in sync.
 
 For more details on the sync internals, see [.ai/sync/README.md](sync/README.md).
