@@ -27,3 +27,9 @@
   - clients (api_client), shared datasources, repositories used by multiple features
   - cross-feature domain contracts/models
   - core utilities (logging, analytics, secure storage wrappers)
+
+## Public API Exports
+
+- Use barrel files for public feature/package APIs to avoid deep, brittle imports.
+- Keep exports intentional: expose stable entry points and do not export private internals.
+- BLoC files with `part` directives already act as the public entry point for their state/event units.

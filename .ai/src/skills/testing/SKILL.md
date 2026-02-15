@@ -13,7 +13,11 @@ description: When writing unit/widget tests for repositories, DTO parsing, and B
 
 ## Steps
 
-### 1) Unit test pure logic first
+### 1) Organize tests to mirror source folders
+
+Keep `test/` structure aligned with the source layout so ownership and coverage are obvious.
+
+### 2) Unit test pure logic first
 
 Prefer tests around:
 
@@ -40,7 +44,7 @@ void main() {
 }
 ```
 
-### 2) Test repositories with mocked datasources/clients
+### 3) Test repositories with mocked datasources/clients
 
 Use `mocktail` (or your project’s standard) to isolate I/O:
 
@@ -62,7 +66,7 @@ void main() {
 }
 ```
 
-### 3) Test BLoCs for success + failure paths
+### 4) Test BLoCs for success + failure paths
 
 Prefer `bloc_test` and keep expectations explicit:
 
@@ -87,14 +91,17 @@ void main() {
 }
 ```
 
-### 4) Keep widget tests focused
+### 5) Keep widget tests focused
 
 Widget tests should verify:
 
 - key UI states (loading/error/loaded)
 - critical interactions
+- behavior that can regress, not static constants
 
-### 5) Use `package:checks` for Assertions
+Prefer one scenario per test for easier failure diagnosis.
+
+### 6) Use `package:checks` for Assertions
 
 For clearer failure messages and a fluent API, prefer `package:checks` over `matcher`:
 
@@ -109,7 +116,7 @@ test('validates value', () {
 });
 ```
 
-### 6) Keep tests isolated and order-independent
+### 7) Keep tests isolated and order-independent
 
 - Keep `setUp`/`tearDown` inside `group(...)` blocks.
 - Recreate mutable collaborators per test; avoid shared static mutable state.
@@ -119,7 +126,7 @@ test('validates value', () {
 flutter test --test-randomize-ordering-seed random
 ```
 
-### 7) Golden tests
+### 8) Golden tests
 
 - Tag golden tests consistently (for example `golden`) so they can run separately.
 - Use `--update-goldens` only in explicit golden update workflows.
@@ -129,7 +136,7 @@ flutter test --tags golden
 flutter test --tags golden --update-goldens
 ```
 
-### 8) Integration Tests
+### 9) Integration Tests
 
 Use `integration_test` for critical user flows (e.g., login, checkout).
 

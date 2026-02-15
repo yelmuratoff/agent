@@ -12,6 +12,9 @@
 - Tests must be deterministic (no real HTTP, no real clocks, no randomness).
 - Prefer fakes/stubs over mocks; use mocks only when interaction verification is required.
 - Mock I/O boundaries (HTTP, database, preferences, secure storage).
+- Organize `test/` to mirror source structure for discoverability.
+- Keep one behavior/scenario per test for easier debugging.
+- Every test must end with explicit assertions (`expect`/`verify`) tied to behavior.
 - Keep `setUp`/`tearDown` scoped to `group(...)` blocks, not at file top level.
 - Initialize mutable collaborators per test; never share mutable/static state across tests.
 

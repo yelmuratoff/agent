@@ -116,3 +116,13 @@ Split only when forced by a concrete reason:
 - security/privacy requires a “safe” domain model (e.g., redacted fields)
 
 If you split, keep mapping explicit and minimal, and document why.
+
+### 7) Expose stable public APIs with barrel files
+
+For reusable feature/package surfaces:
+
+- create folder-level barrel files for public units
+- provide a single top-level entry barrel for consumers
+- avoid exporting private/internal-only files
+
+For BLoC state/event units built with `part` directives, the `*_bloc.dart` file is already the entry point and does not need an additional barrel.
