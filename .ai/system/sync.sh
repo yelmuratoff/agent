@@ -34,6 +34,15 @@ SKIP_TOOLS=""
 SYNCED_COUNT=0
 SKIPPED_COUNT=0
 TOTAL_COUNT=0
+PROJECT_CONFIG_PATH=""
+SOURCE_AGENTS=""
+SOURCE_RULES=""
+SOURCE_SKILLS=""
+SOURCE_TOOLS=""
+DETECTED_SOURCE_AGENTS=""
+DETECTED_SOURCE_RULES=""
+DETECTED_SOURCE_SKILLS=""
+DETECTED_SOURCE_TOOLS=""
 
 # Usage information
 usage() {
@@ -56,6 +65,86 @@ Examples:
   $(basename "$0") --skip gemini         # Sync all except Gemini
   $(basename "$0") --dry-run             # Preview changes without applying
 EOF
+}
+
+# Resolve project config path
+# Priority:
+# 1) AGENTSYNC_CONFIG_PATH env var (absolute or relative to REPO_ROOT)
+# 2) REPO_ROOT/agent_sync.yaml
+resolve_project_config_path() {
+    local config_env="${AGENTSYNC_CONFIG_PATH:-}"
+    if [[ -n "$config_env" ]]; then
+        local env_path="$config_env"
+        if [[ "$env_path" != /* ]]; then
+            env_path="$REPO_ROOT/$env_path"
+        fi
+
+        if [[ -f "$env_path" ]]; then
+            PROJECT_CONFIG_PATH="$env_path"
+            return 0
+        fi
+
+        log_warning "AGENTSYNC_CONFIG_PATH is set but file not found: $env_path"
+    fi
+
+    local project_config="$REPO_ROOT/agent_sync.yaml"
+    if [[ -f "$project_config" ]]; then
+        PROJECT_CONFIG_PATH="$project_config"
+    fi
+}
+
+# Auto-detect source layout inside target project
+detect_source_layout() {
+    # Legacy/default layout
+    if [[ -f "$REPO_ROOT/.ai/src/AGENTS.md" ]]; then
+        DETECTED_SOURCE_AGENTS=".ai/src/AGENTS.md"
+        DETECTED_SOURCE_RULES=".ai/src/rules"
+        DETECTED_SOURCE_SKILLS=".ai/src/skills"
+        DETECTED_SOURCE_TOOLS=".ai/src/tools"
+        return 0
+    fi
+
+    # Flat layout
+    local flat_agents=""
+    local candidates=(
+        ".ai/AGENTS.md"
+    )
+    for candidate in "${candidates[@]}"; do
+        if [[ -f "$REPO_ROOT/$candidate" ]]; then
+            flat_agents="$candidate"
+            break
+        fi
+    done
+
+    if [[ -n "$flat_agents" ]] && [[ -d "$REPO_ROOT/.ai/tools" ]]; then
+        DETECTED_SOURCE_AGENTS="$flat_agents"
+        DETECTED_SOURCE_RULES=".ai/rules"
+        DETECTED_SOURCE_SKILLS=".ai/skills"
+        DETECTED_SOURCE_TOOLS=".ai/tools"
+        return 0
+    fi
+
+    return 1
+}
+
+# Resolve source path from project config (supports both root keys and source.* keys)
+resolve_source_override() {
+    local key="$1"
+
+    if [[ -z "$PROJECT_CONFIG_PATH" ]]; then
+        echo ""
+        return 0
+    fi
+
+    local nested direct
+    nested=$(parse_yaml_value "$PROJECT_CONFIG_PATH" "source.$key") || true
+    if [[ -n "$nested" ]]; then
+        echo "$nested"
+        return 0
+    fi
+
+    direct=$(parse_yaml_value "$PROJECT_CONFIG_PATH" "$key") || true
+    echo "$direct"
 }
 
 # Parse command line arguments
@@ -151,18 +240,11 @@ sync_tool() {
     
     log_info "Syncing $tool_name..."
     
-    # Load global config paths
-    local global_config="$SCRIPT_DIR/config.yaml"
-    local global_src_agents global_src_rules global_src_skills
-    global_src_agents=$(parse_yaml_value "$global_config" "source.agents")
-    global_src_rules=$(parse_yaml_value "$global_config" "source.rules")
-    global_src_skills=$(parse_yaml_value "$global_config" "source.skills")
-    
     # 1. AGENTS
     # Check for override
     local override_agents src_agents
     override_agents=$(parse_yaml_value "$tool_config" "targets.agents.source")
-    src_agents="${override_agents:-$global_src_agents}"
+    src_agents="${override_agents:-$SOURCE_AGENTS}"
     
     # Sync AGENTS.md
     if [[ -n "$dest_agents" ]]; then
@@ -173,7 +255,7 @@ sync_tool() {
     # Check for override
     local override_rules src_rules
     override_rules=$(parse_yaml_value "$tool_config" "targets.rules.source")
-    src_rules="${override_rules:-$global_src_rules}"
+    src_rules="${override_rules:-$SOURCE_RULES}"
     
     # Read optional rule transformations and filters
     local rule_ext rule_header append_imports rule_include rule_exclude
@@ -200,7 +282,7 @@ sync_tool() {
     # Check for override
     local override_skills src_skills
     override_skills=$(parse_yaml_value "$tool_config" "targets.skills.source")
-    src_skills="${override_skills:-$global_src_skills}"
+    src_skills="${override_skills:-$SOURCE_SKILLS}"
     
     # Read skill filters
     local skills_include skills_exclude
@@ -239,30 +321,54 @@ main() {
     log_separator
     echo ""
     
-    # Verify source exists
+    # Verify base config exists
     local global_config="$SCRIPT_DIR/config.yaml"
     if [[ ! -f "$global_config" ]]; then
         log_error "Global config not found: $global_config"
         exit 1
     fi
-    
-    local src_agents
-    src_agents=$(parse_yaml_value "$global_config" "source.agents")
-    if [[ ! -f "$REPO_ROOT/$src_agents" ]]; then
-        log_error "Source AGENTS.md not found: $REPO_ROOT/$src_agents"
+
+    # Resolve project config and detect source layout
+    resolve_project_config_path
+    if detect_source_layout; then
+        SOURCE_AGENTS="$DETECTED_SOURCE_AGENTS"
+        SOURCE_RULES="$DETECTED_SOURCE_RULES"
+        SOURCE_SKILLS="$DETECTED_SOURCE_SKILLS"
+        SOURCE_TOOLS="$DETECTED_SOURCE_TOOLS"
+    else
+        SOURCE_AGENTS=$(parse_yaml_value "$global_config" "source.agents")
+        SOURCE_RULES=$(parse_yaml_value "$global_config" "source.rules")
+        SOURCE_SKILLS=$(parse_yaml_value "$global_config" "source.skills")
+        SOURCE_TOOLS=$(parse_yaml_value "$global_config" "source.tools")
+    fi
+
+    # Apply optional project-level overrides from agent_sync.yaml
+    local override_agents override_rules override_skills override_tools
+    override_agents=$(resolve_source_override "agents")
+    override_rules=$(resolve_source_override "rules")
+    override_skills=$(resolve_source_override "skills")
+    override_tools=$(resolve_source_override "tools")
+
+    [[ -n "$override_agents" ]] && SOURCE_AGENTS="$override_agents"
+    [[ -n "$override_rules" ]] && SOURCE_RULES="$override_rules"
+    [[ -n "$override_skills" ]] && SOURCE_SKILLS="$override_skills"
+    [[ -n "$override_tools" ]] && SOURCE_TOOLS="$override_tools"
+
+    if [[ -z "$SOURCE_TOOLS" ]]; then
+        SOURCE_TOOLS=".ai/system/tools"
+        log_warning "source.tools is not set, falling back to $SOURCE_TOOLS"
+    fi
+
+    if [[ ! -f "$REPO_ROOT/$SOURCE_AGENTS" ]]; then
+        log_error "Source agents file not found: $REPO_ROOT/$SOURCE_AGENTS"
+        log_error "Expected either .ai/src layout, .ai layout, or agent_sync.yaml overrides"
         exit 1
     fi
-    
-    # Resolve tool configuration directory
-    local tools_dir_rel tools_dir_abs
-    tools_dir_rel=$(parse_yaml_value "$global_config" "source.tools") || true
-    if [[ -z "$tools_dir_rel" ]]; then
-        tools_dir_rel=".ai/system/tools"
-        log_warning "source.tools is not set in config.yaml, falling back to $tools_dir_rel"
-    fi
-    tools_dir_abs="$REPO_ROOT/$tools_dir_rel"
+
+    local tools_dir_abs="$REPO_ROOT/$SOURCE_TOOLS"
     if [[ ! -d "$tools_dir_abs" ]]; then
         log_error "Tool config directory not found: $tools_dir_abs"
+        log_error "Set source.tools in agent_sync.yaml if your layout is custom"
         exit 1
     fi
 

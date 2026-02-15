@@ -1,12 +1,12 @@
 # AgentSync System
 
-This directory contains the sync engine that maps `.ai/src/*` to tool-specific config layouts.
+This directory contains the sync engine that maps AI source files to tool-specific config layouts.
 
 For authoring guidelines, see `.ai/README.md`.
 
 ## Inputs and Outputs
 
-### Source inputs (from `config.yaml`)
+### Source inputs (defaults from `config.yaml`)
 
 ```yaml
 source:
@@ -16,11 +16,23 @@ source:
   tools: ".ai/src/tools"
 ```
 
+`sync.sh` also supports:
+
+- Flat layout auto-detection:
+  - `.ai/AGENTS.md`
+  - `.ai/rules`
+  - `.ai/skills`
+  - `.ai/tools`
+- Project overrides via `<repo>/agent_sync.yaml`:
+  - `source.agents|rules|skills|tools` (preferred)
+  - `agents|rules|skills|tools` (flat keys)
+- Optional override file via `AGENTSYNC_CONFIG_PATH`.
+
 ### Generated outputs
 
-Outputs are defined per tool in `.ai/src/tools/*.yaml` (configurable via `source.tools` in `.ai/system/config.yaml`).
+Outputs are defined per tool in source `tools/*.yaml` (path configurable via source settings).
 
-Enabled/disabled tool outputs are controlled by each file's `enabled` flag in `.ai/src/tools/*.yaml`.
+Enabled/disabled tool outputs are controlled by each file's `enabled` flag in `tools/*.yaml`.
 
 ## Commands
 
@@ -57,7 +69,7 @@ Validation helper:
 .ai/system/check.sh
 ```
 
-## `.ai/src/tools/*.yaml` Schema
+## `tools/*.yaml` Schema
 
 Minimal:
 
@@ -91,7 +103,7 @@ Reference template: `.ai/src/tools/_TEMPLATE.yaml`
 
 ## Sync Behavior
 
-For each `.ai/src/tools/*.yaml` file:
+For each `tools/*.yaml` file:
 
 1. Read `name`, `enabled`, and target paths.
 2. If disabled, clean existing generated paths for that tool.
