@@ -1,103 +1,143 @@
-# AI Config Sync
+# AI Config Sync System
 
-Syncs `.ai/src/` configs to all AI tool directories.
+This directory contains the sync engine that maps `.ai/src/*` to tool-specific config layouts.
 
-> **User Manual**: For high-level philosophy and writing guides, see [../README.md](../README.md).
-> This document covers technical details, configuration schema, and tooling.
+For authoring guidelines, see `.ai/README.md`.
 
-## Source
+## Inputs and Outputs
 
-```
-.ai/src/
-├── AGENTS.md       # Identity/context → copied as main file
-├── rules/*.md      # Rule files → copied/transformed per tool
-└── skills/         # Skill folders → copied as-is
-```
-
-### Tool Configuration
-
-Each tool in `tools/*.yaml` defines how to map the source files to the tool's expected format.
-
-**Template:**
-See [`tools/_TEMPLATE.yaml`](tools/_TEMPLATE.yaml) for a fully commented example.
-
-**Schema Reference:**
+### Source inputs (from `config.yaml`)
 
 ```yaml
-name: "My Tool" # Display name for logs
-enabled: true # Set false to disable sync
-
-targets:
-  agents:
-    dest: ".tool/AGENTS.md" # Where to put the identity file
-
-  rules:
-    dest: ".tool/rules" # Where to put rule files
-    extension: ".mdc" # Optional: Change file extension
-    header: "..." # Optional: Prepend text to every rule
-    append_imports: true # Optional: Add @rule imports to AGENTS file
-
-  skills:
-    dest: ".tool/skills" # Where to put skill folders
+source:
+  agents: ".ai/src/AGENTS.md"
+  rules: ".ai/src/rules"
+  skills: ".ai/src/skills"
 ```
 
-## Usage
+### Generated outputs
 
-### 1. Synchronization (Local)
+Outputs are defined per tool in `.ai/system/tools/*.yaml`.
 
-To generate configurations for all enabled tools:
+Currently enabled:
+
+- `.agent/*` (Antigravity)
+- `.claude/*` (Claude Code)
+- `.github/copilot-instructions.md`, `.github/instructions/*`, `.github/skills/*` (Copilot)
+- `.gemini/*` (Gemini CLI)
+
+Currently disabled:
+
+- `.codex/*`
+- `.cursor/*`
+
+## Commands
+
+Run from repo root.
+
+Full sync:
 
 ```bash
 .ai/system/sync.sh
 ```
 
-### 2. Git Strategy (Recommended)
+Preview only:
 
-We commit the generated configurations to Git to ensure all team members stay in sync without running scripts manually.
+```bash
+.ai/system/sync.sh --dry-run
+```
 
-1.  Run `sync.sh` after modifying `.ai/src/` contents.
-2.  Commit the changes (both `.ai/src/` source and generated targets).
-3.  Team members effectively get updates via `git pull`.
+Filter tools:
 
-### 3. Automated Sync (Hooks)
+```bash
+.ai/system/sync.sh --only claude,copilot
+.ai/system/sync.sh --skip gemini
+```
 
-Install Git hooks to sync automatically on `pull` and `checkout`:
+Install git hooks:
 
 ```bash
 .ai/system/setup_hooks.sh
 ```
 
-### 4. Dynamic Gitignore
-
-`sync.sh` automatically updates `.gitignore` to exclude generated artifacts.
-
-- It looks for `tool.yaml` configs with `enabled: true`.
-- It updates the block between `# --- AI SYNC GENERATED START ---` markers.
-- Manual entries in `.gitignore` are preserved.
-
-### 5. CI / Validation
-
-To verify that configurations are in sync (e.g., in CI or pre-commit hook):
+Validation helper:
 
 ```bash
 .ai/system/check.sh
 ```
 
-This script exits with `0` if synced, `1` if changes are detected.
+## `tools/*.yaml` Schema
 
-## Config
+Minimal:
+
+```yaml
+name: "Tool Name"
+enabled: true
+targets:
+  agents:
+    dest: ".tool/AGENTS.md"
+  rules:
+    dest: ".tool/rules"
+  skills:
+    dest: ".tool/skills"
+```
+
+Supported optional fields:
+
+- `targets.agents.source`: override AGENTS source file
+- `targets.rules.source`: override rules source directory
+- `targets.rules.extension`: rename rule extension (example: `.mdc`, `.instructions.md`)
+- `targets.rules.header`: prepend text to each rule file
+- `targets.rules.include`: include glob for source rule file names
+- `targets.rules.exclude`: exclude glob for source rule file names
+- `targets.rules.append_imports`: append `@rules/...` lines into agents file (used by Claude)
+- `targets.skills.source`: override skills source directory
+- `targets.skills.include`: include glob for skill folder names
+- `targets.skills.exclude`: exclude glob for skill folder names
+- `post_sync`: shell command run after successful sync of that tool
+
+Reference template: `.ai/system/tools/_TEMPLATE.yaml`
+
+## Sync Behavior
+
+For each `tools/*.yaml` file:
+
+1. Read `name`, `enabled`, and target paths.
+2. If disabled, clean existing generated paths for that tool.
+3. Apply CLI filters (`--only`, `--skip`).
+4. Sync `agents` file.
+5. Sync `rules` with optional extension/header/filtering and differential cleanup.
+6. Sync `skills` directories with filtering and differential cleanup.
+7. Run optional `post_sync`.
+8. After all tools, update generated block in `.gitignore`.
+
+## `.gitignore` Integration
+
+`sync.sh` rewrites the block between:
+
+- `# --- AI SYNC GENERATED START ---`
+- `# --- AI SYNC GENERATED END ---`
+
+It inserts generated paths for all enabled tools and keeps the rest of `.gitignore` intact.
+
+## Files in This Directory
 
 ```
 .ai/system/
-├── config.yaml       # Source paths
-├── sync.sh           # Main script
-├── lib/              # Helper functions
-└── tools/*.yaml      # Per-tool configs
+├── config.yaml        # Global source path mapping
+├── sync.sh            # Main sync entrypoint
+├── setup_hooks.sh     # Installs post-merge and post-checkout hooks
+├── check.sh           # Verification helper
+├── lib/files.sh       # Copy/sync/filter operations
+├── lib/yaml.sh        # Lightweight YAML parser
+├── lib/gitignore.sh   # Generated block updater
+└── tools/*.yaml       # Per-tool mapping configs
 ```
 
-## Adding New Tool
+## Add a New Tool
 
-1. Create `.ai/system/tools/newtool.yaml`
-2. Set `enabled: true`
-3. Define `targets.agents.dest`, `targets.rules.dest`, `targets.skills.dest`
-4. Run `.ai/system/sync.sh`
+1. Copy `.ai/system/tools/_TEMPLATE.yaml` to `.ai/system/tools/<tool>.yaml`.
+2. Fill `name`, set `enabled: true`, and configure all target destinations.
+3. Add optional transforms (`extension`, `header`, `include/exclude`) only if needed.
+4. Run `.ai/system/sync.sh --only <tool>`.
+5. Verify output and rerun full `.ai/system/sync.sh`.

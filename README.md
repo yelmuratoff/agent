@@ -1,105 +1,76 @@
-# AI Agent Configuration
+# AI Agent Configuration Workspace
 
-`.ai/` is the single source of truth for all agent configs. Never edit tool directories directly.
+This repository centralizes AI agent instructions in one source and syncs them to tool-specific formats.
 
-## Structure
+## Source of Truth
+
+Edit only `.ai/src/`.
+Do not edit generated tool folders directly (`.agent/`, `.claude/`, `.gemini/`, `.github/`).
 
 ```
 .ai/
-├── AGENTS.md      # WHO: Identity, mindset, philosophy
-├── rules/         # WHAT: Constraints, < 50 lines/file, no code
-└── skills/        # HOW: Recipes with code, loaded on-demand
+├── src/                  # Authoring source (edit here)
+│   ├── AGENTS.md
+│   ├── rules/*.md
+│   └── skills/*/SKILL.md
+├── system/               # Sync engine
+│   ├── sync.sh
+│   ├── setup_hooks.sh
+│   ├── check.sh
+│   ├── config.yaml
+│   └── tools/*.yaml
+└── README.md             # Authoring guide
 ```
 
-## AGENTS.md
+## Current Tool Targets
 
-Agent identity and philosophy. Highest priority, always active.
+Enabled tools are defined in `.ai/system/tools/*.yaml`.
 
-**Contains:** Mindset, approach, decision-making principles. Minimal code.  
-**Size:** 100-200 lines
+| Tool config | Status | Generated targets |
+| --- | --- | --- |
+| `antigravity.yaml` | enabled | `.agent/AGENTS.md`, `.agent/rules`, `.agent/skills` |
+| `claude.yaml` | enabled | `.claude/CLAUDE.md`, `.claude/rules`, `.claude/skills` |
+| `copilot.yaml` | enabled | `.github/copilot-instructions.md`, `.github/instructions`, `.github/skills` |
+| `gemini.yaml` | enabled | `.gemini/GEMINI.md`, `.gemini/prompts`, `.gemini/skills` |
+| `codex.yaml` | disabled | `.codex/*` (not generated) |
+| `cursor.yaml` | disabled | `.cursor/*` (not generated) |
 
-## Rules (`rules/*.md`)
+## Workflow
 
-Hard constraints. Always active, high priority.
-
-**Contains:** Strict rules, restrictions, requirements. No code.  
-**Size:** < 50 lines per file
-
-For example:
-
+1. Edit source files in `.ai/src/`.
+2. Run sync:
+```bash
+.ai/system/sync.sh
 ```
-rules/
-├── core.md             # Generators, tests, security
-├── architecture.md     # Layer separation
-├── bloc.md             # Sealed classes, handleException
-├── data-persistence.md # How to use Drift
-├── logging.md          # Logger
-├── analytics.md        # How to use analytics_gen
-└── di.md               # How to use Scope widgets
+3. Optional preview:
+```bash
+.ai/system/sync.sh --dry-run
 ```
-
-## Skills (`skills/*/SKILL.md`)
-
-Step-by-step recipes with code. Loaded when relevant.
-
-**Contains:** Templates, commands, full code examples
-
-For example:
-
-```
-skills/
-├── analytics/SKILL.md
-├── architecture/SKILL.md
-├── bloc/SKILL.md
-├── database/SKILL.md
-├── di/SKILL.md
-└── logging/SKILL.md
+4. Optional partial sync:
+```bash
+.ai/system/sync.sh --only claude,copilot
+.ai/system/sync.sh --skip gemini
 ```
 
-**Format:**
+## Git Hooks (Recommended)
 
-```markdown
----
-name: skill-name
-description: When to use.
----
+Install once:
 
-# Title
-
-## When to use
-
-## Steps
+```bash
+.ai/system/setup_hooks.sh
 ```
 
-## Sync
+This installs `post-merge` and `post-checkout` hooks that run `.ai/system/sync.sh` automatically.
 
-Keep your tools in sync with the clean repo workflow:
+## Gitignore Behavior
 
-1.  **One-time Setup:**
-    ```bash
-    .ai/system/setup_hooks.sh
-    ```
-2.  **Usage:**
-    Just `git pull` or `git checkout`. The sync runs automatically.
-    You can still run manually if needed:
-    ```bash
-    .ai/system/sync.sh
-    ```
+`sync.sh` updates the block between:
+- `# --- AI SYNC GENERATED START ---`
+- `# --- AI SYNC GENERATED END ---`
 
-See [.ai/system/README.md](.ai/system/README.md).
+This block is rebuilt from enabled tool targets in `.ai/system/tools/*.yaml`.
 
-## Quick Reference
+## Documentation Map
 
-| Tier      | Purpose     | Size            | Code    | Priority  |
-| --------- | ----------- | --------------- | ------- | --------- |
-| AGENTS.md | Identity    | 100-200         | Minimal | Highest   |
-| Rules     | Constraints | < 50 lines/file | None    | High      |
-| Skills    | Recipes     | Unlimited       | Full    | On-demand |
-
-## Guidelines
-
-1. AGENTS.md — philosophy, not instructions
-2. Rules — short, strict, no code
-3. Skills — full code, templates
-4. Don't duplicate between tiers
-5. Update rules and related skills together
+- Authoring rules and conventions: `.ai/README.md`
+- Sync engine details and YAML schema: `.ai/system/README.md`
