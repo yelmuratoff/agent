@@ -9,6 +9,7 @@
 - **Document Public APIs**: Use `///` documentation comments for libraries and public members.
 - **Standardize Formatting**: Begin all comments with a single space `// Like this` for readability.
 - **Refactor First**: Prioritize renaming variables and functions to clarify intent before resorting to comments.
+- **No Trailing Comments**: Avoid end-of-line comments that duplicate obvious code behavior.
 
 ## Public API Docs
 

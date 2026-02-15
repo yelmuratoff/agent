@@ -4,6 +4,7 @@
 
 - Follow Effective Dart for naming, structure, and API design.
 - Prefer flow analysis and early returns over non-null assertions.
+- Prefer existing project dependencies and native SDK capabilities before adding new packages.
 
 ## Codegen Policy
 
@@ -30,6 +31,7 @@
 ## Verification Gates
 
 - Run `dart format` for modified files before finalizing.
+- Run `dart fix --apply` for safe, automated lint cleanup when relevant.
 - Run `dart analyze` and keep the result warning-free.
 - Run targeted `flutter test` for changed features; run full suite before merge when possible.
 

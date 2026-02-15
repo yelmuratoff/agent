@@ -22,6 +22,11 @@ trigger: always_on
   - `Wrap`: For overflow safety.
 - **Overlays**: Use `OverlayPortal` for complex floating UI (dropdowns, tooltips).
 
+## Typography
+
+- **Scale**: Define a consistent typographic scale in `TextTheme` (display/title/body/label).
+- **Families**: Limit app typography to one or two font families for consistency and readability.
+
 ## Images & Media
 
 - **Network Images**: Always provide `loadingBuilder` and `errorBuilder` for `Image.network`.
@@ -30,7 +35,7 @@ trigger: always_on
 ## Accessibility (A11Y)
 
 - **Contrast**: Ensure text has at least **4.5:1** contrast ratio (or **3:1** for large text).
-- **Scaling**: UI must remain usable when system font size is increased (test dynamic type).
+- **Scaling**: UI must remain usable when system font size is increased (test dynamic type up to 200%).
 - **Semantics**: Use `Semantics` widget for screen reader labels.
 - **Touch Targets**: Ensure interactive elements are at least 48x48dp.
 - **Screen Readers**: Validate critical flows with TalkBack (Android) and VoiceOver (iOS).
