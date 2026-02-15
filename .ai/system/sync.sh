@@ -33,6 +33,7 @@ DRY_RUN="false"
 ONLY_TOOLS=""
 SKIP_TOOLS=""
 SKIP_POST_SYNC="${AGENTSYNC_SKIP_POST_SYNC:-false}"
+ALLOW_POST_SYNC="${AGENTSYNC_ALLOW_POST_SYNC:-false}"
 SYNCED_COUNT=0
 SKIPPED_COUNT=0
 TOTAL_COUNT=0
@@ -353,6 +354,11 @@ run_post_sync_hook() {
         return 0
     fi
 
+    if [[ "$ALLOW_POST_SYNC" != "true" ]]; then
+        log_warning "Skipping post-sync hook for $tool_name (set AGENTSYNC_ALLOW_POST_SYNC=true to enable)"
+        return 0
+    fi
+
     log_info "Running post-sync hook: $post_sync_cmd"
     # Execute once through bash without eval to avoid re-parsing command input.
     if ! (cd "$REPO_ROOT" && bash -lc "$post_sync_cmd"); then
@@ -556,7 +562,7 @@ main() {
     fi
 
     # Process each tool config
-    local generated_paths=""
+    local -a generated_paths=()
     for tool_config in "$tools_dir_abs"/*.yaml; do
         [[ -f "$tool_config" ]] || continue
         local tool_file_basename
@@ -579,17 +585,17 @@ main() {
              if [[ -n "$d_agents" ]]; then
                  d_agents_abs=$(resolve_repo_path "$d_agents" "targets.agents.dest in $tool_file_basename")
                  d_agents_rel=$(to_repo_relative_path "$d_agents_abs")
-                 generated_paths="$generated_paths $d_agents_rel"
+                 generated_paths+=("$d_agents_rel")
              fi
              if [[ -n "$d_rules" ]]; then
                  d_rules_abs=$(resolve_repo_path "$d_rules" "targets.rules.dest in $tool_file_basename")
                  d_rules_rel=$(to_repo_relative_path "$d_rules_abs")
-                 generated_paths="$generated_paths $d_rules_rel/"
+                 generated_paths+=("$d_rules_rel/")
              fi
              if [[ -n "$d_skills" ]]; then
                  d_skills_abs=$(resolve_repo_path "$d_skills" "targets.skills.dest in $tool_file_basename")
                  d_skills_rel=$(to_repo_relative_path "$d_skills_abs")
-                 generated_paths="$generated_paths $d_skills_rel/"
+                 generated_paths+=("$d_skills_rel/")
              fi
         fi
 
@@ -601,7 +607,11 @@ main() {
     if [[ "$DRY_RUN" != "true" ]]; then
         log_separator
         log_info "Updating .gitignore..."
-        update_gitignore "$REPO_ROOT/.gitignore" "$generated_paths"
+        local generated_paths_payload=""
+        if [[ ${#generated_paths[@]} -gt 0 ]]; then
+            generated_paths_payload=$(printf '%s\n' "${generated_paths[@]}")
+        fi
+        update_gitignore "$REPO_ROOT/.gitignore" "$generated_paths_payload"
     fi
     
     # Print summary

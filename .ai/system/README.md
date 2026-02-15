@@ -104,6 +104,7 @@ Supported optional fields:
 - `targets.skills.include`: include glob for skill folder names
 - `targets.skills.exclude`: exclude glob for skill folder names
 - `post_sync`: shell command run after successful sync of that tool
+  - by default disabled for safety; enable explicitly with `AGENTSYNC_ALLOW_POST_SYNC=true`
 
 Reference template: `.ai/src/tools/_TEMPLATE.yaml`
 
@@ -119,6 +120,11 @@ For each `tools/*.yaml` file:
 6. Sync `skills` directories with filtering and differential cleanup.
 7. Run optional `post_sync`.
 8. After all tools, update generated block in `.gitignore`.
+
+`post_sync` safety:
+- default behavior skips post-sync commands
+- set `AGENTSYNC_ALLOW_POST_SYNC=true` to allow execution in trusted repositories
+- set `AGENTSYNC_SKIP_POST_SYNC=true` to force-disable post-sync (used by `check.sh`)
 
 ## `.gitignore` Integration
 

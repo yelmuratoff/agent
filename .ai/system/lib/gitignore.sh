@@ -3,7 +3,7 @@
 # Only touches content between specific markers
 
 # Update .gitignore with a list of paths
-# Usage: update_gitignore "path/to/.gitignore" "path1 path2 path3 ..."
+# Usage: update_gitignore "path/to/.gitignore" "$(printf '%s\n' 'path1' 'path with spaces/path2')"
 update_gitignore() {
     local gitignore_file="$1"
     local paths_string="$2"
@@ -23,12 +23,10 @@ update_gitignore() {
 # Do not edit this block manually.
 "
     
-    # Append paths (sorted/deduplicated)
+    # Append paths (sorted/deduplicated). Input paths are newline-delimited.
     if [[ -n "$paths_string" ]]; then
-        # Convert space-separated string to newlines, sort, and append
-        # Use simple echo + tr for compatibility
         local sorted_paths
-        sorted_paths=$(echo "$paths_string" | tr ' ' '\n' | sed '/^$/d' | sort | uniq)
+        sorted_paths=$(printf '%s\n' "$paths_string" | sed '/^$/d' | sort | uniq)
         new_block="${new_block}${sorted_paths}
 "
     fi
