@@ -26,7 +26,7 @@ Create a TODO list with concrete steps. Breaking work into pieces makes progress
 Write each piece, checking off TODOs. Build sealed types intentionally for exhaustiveness. Write immutable models. Handle errors with specific exception types. Separate concerns into layers. Write tests for complex logic.
 
 **Step 4: Verify**
-Tests pass and coverage is solid (80%+ on business logic). Run `dart analyze`—zero warnings. Code follows established patterns. Layer separation is strict. Sealed types prevent missing cases.
+Tests pass and coverage is solid (80%+ on business logic). Run `dart format` and `dart analyze`—zero warnings. Run relevant `flutter test` suites for changed areas. Code follows established patterns. Layer separation is strict. Sealed types prevent missing cases.
 
 ## Design Principles Applied
 

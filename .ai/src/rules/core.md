@@ -3,6 +3,7 @@
 ## Style
 
 - Follow Effective Dart for naming, structure, and API design.
+- Prefer flow analysis and early returns over non-null assertions.
 
 ## Codegen Policy
 
@@ -14,11 +15,23 @@
 - Prefer small, explicit Dart 3 code: immutable models, sealed hierarchies, exhaustive switches.
 - Apply SOLID/DRY/KISS/YAGNI to keep code changeable and simple.
 - Consistency: specific metric - aim for functions < 100 lines to ensure readability and single responsibility.
+- Keep `build()` methods side-effect free (no network calls, I/O, or heavy computation).
+
+## Null Safety
+
+- Avoid the non-null assertion operator (`!`) unless guarded by prior checks/assertions in the same control flow.
+- Prefer nullable-aware operators and explicit guards over forced casts.
 
 ## Testing
 
 - Write tests for business logic and error cases; mock I/O (network, database, preferences).
 - Use Given/When/Then structure; keep tests fast and deterministic.
+
+## Verification Gates
+
+- Run `dart format` for modified files before finalizing.
+- Run `dart analyze` and keep the result warning-free.
+- Run targeted `flutter test` for changed features; run full suite before merge when possible.
 
 ## Error Handling
 

@@ -20,9 +20,15 @@ trigger: always_on
   - `Wrap`: For overflow safety.
 - **Overlays**: Use `OverlayPortal` for complex floating UI (dropdowns, tooltips).
 
+## Images & Media
+
+- **Network Images**: Always provide `loadingBuilder` and `errorBuilder` for `Image.network`.
+- **Assets**: Declare assets in `pubspec.yaml` and prefer semantic, feature-scoped asset paths.
+
 ## Accessibility (A11Y)
 
 - **Contrast**: Ensure text has at least **4.5:1** contrast ratio.
 - **Scaling**: UI must remain usable when system font size is increased (test dynamic type).
 - **Semantics**: Use `Semantics` widget for screen reader labels.
 - **Touch Targets**: Ensure interactive elements are at least 48x48dp.
+- **Screen Readers**: Validate critical flows with TalkBack (Android) and VoiceOver (iOS).

@@ -55,3 +55,24 @@ LayoutBuilder(
   },
 )
 ```
+
+### 3) Accessibility & Media Resilience
+
+- Ensure critical UI remains usable under larger text scales (up to 200%).
+- Add semantic labels for non-obvious interactive controls.
+- Prefer `CachedNetworkImage` for remote images with explicit placeholder and error states.
+
+```dart
+import 'package:cached_network_image/cached_network_image.dart';
+
+CachedNetworkImage(
+  imageUrl: imageUrl,
+  fit: BoxFit.cover,
+  placeholder: (context, url) {
+    return const Center(child: CircularProgressIndicator());
+  },
+  errorWidget: (context, url, error) {
+    return const Icon(Icons.broken_image);
+  },
+);
+```
