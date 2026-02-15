@@ -341,6 +341,33 @@ should_sync_tool() {
     return 0
 }
 
+read_tool_enabled_flag() {
+    local tool_config="$1"
+    local tool_name="$2"
+
+    local enabled_value=""
+    enabled_value=$(parse_yaml_bool_strict "$tool_config" "enabled")
+    local parse_status=$?
+    if [[ $parse_status -ne 0 ]]; then
+        case "$parse_status" in
+            2)
+                log_error "Tool config is missing required boolean 'enabled': $tool_config ($tool_name)"
+                ;;
+            3)
+                local raw_value
+                raw_value=$(parse_yaml_value "$tool_config" "enabled")
+                log_error "Invalid boolean for 'enabled' in $tool_config ($tool_name): '$raw_value'"
+                ;;
+            *)
+                log_error "Failed to parse 'enabled' from $tool_config ($tool_name)"
+                ;;
+        esac
+        return 1
+    fi
+
+    echo "$enabled_value"
+}
+
 run_post_sync_hook() {
     local tool_name="$1"
     local post_sync_cmd="$2"
@@ -390,9 +417,12 @@ sync_tool() {
     [[ -n "$dest_agents" ]] && dest_agents_abs=$(resolve_repo_path "$dest_agents" "targets.agents.dest for $tool_name")
     [[ -n "$dest_rules" ]] && dest_rules_abs=$(resolve_repo_path "$dest_rules" "targets.rules.dest for $tool_name")
     [[ -n "$dest_skills" ]] && dest_skills_abs=$(resolve_repo_path "$dest_skills" "targets.skills.dest for $tool_name")
-    
+
+    local enabled_value
+    enabled_value=$(read_tool_enabled_flag "$tool_config" "$tool_name") || return 1
+
     # Check if tool is enabled in config
-    if ! parse_yaml_bool "$tool_config" "enabled"; then
+    if [[ "$enabled_value" == "false" ]]; then
         # Cleanup disabled tool directories
         local cleaned=false
         [[ -n "$dest_agents_abs" ]] && cleanup_path "$dest_agents_abs" "$DRY_RUN" && cleaned=true
@@ -574,7 +604,9 @@ main() {
         
         # Check enabled status for gitignore collection even if skipping sync (for dry-run accuracy we might need to think, 
         # but here we follow config truth)
-        if parse_yaml_bool "$tool_config" "enabled"; then
+        local enabled_value
+        enabled_value=$(read_tool_enabled_flag "$tool_config" "$tool_file_basename") || exit 1
+        if [[ "$enabled_value" == "true" ]]; then
              # Collect paths for gitignore
              local d_agents d_rules d_skills d_agents_abs d_rules_abs d_skills_abs
              local d_agents_rel d_rules_rel d_skills_rel

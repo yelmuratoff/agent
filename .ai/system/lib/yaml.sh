@@ -131,3 +131,39 @@ parse_yaml_bool() {
     esac
 }
 
+# Parse strict boolean value from YAML file
+# Usage: parse_yaml_bool_strict "file.yaml" "key.subkey"
+# Prints: "true" or "false" on success
+# Returns:
+#   0 - parsed successfully
+#   2 - key missing or empty
+#   3 - value is not a valid boolean scalar
+parse_yaml_bool_strict() {
+    local file="$1"
+    local key_path="$2"
+
+    local value
+    value=$(parse_yaml_value "$file" "$key_path")
+
+    # Empty values are treated as missing for strict mode.
+    if [[ -z "$value" ]]; then
+        return 2
+    fi
+
+    local lower_value
+    lower_value=$(echo "$value" | tr '[:upper:]' '[:lower:]')
+
+    case "$lower_value" in
+        true|yes|1|on)
+            echo "true"
+            return 0
+            ;;
+        false|no|0|off)
+            echo "false"
+            return 0
+            ;;
+        *)
+            return 3
+            ;;
+    esac
+}

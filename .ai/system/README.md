@@ -113,6 +113,7 @@ Reference template: `.ai/src/tools/_TEMPLATE.yaml`
 For each `tools/*.yaml` file:
 
 1. Read `name`, `enabled`, and target paths.
+   - `enabled` is required and must be a boolean scalar (`true/false`, `yes/no`, `on/off`, `1/0`).
 2. If disabled, clean existing generated paths for that tool.
 3. Apply CLI filters (`--only`, `--skip`).
 4. Sync `agents` file.

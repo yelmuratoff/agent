@@ -106,22 +106,16 @@ sync_dir() {
         local basename
         basename=$(basename "$dest_item")
         
-        # Check if this item falls under our management (matches filter)
-        if matches_filter "$basename" "$include" "$exclude"; then
-             # It IS managed. Is it in source?
-             if [[ "$source_items" != *"|$basename|"* ]]; then
-                 # Managed but missing in source -> DELETE
-                 if [[ "$dry_run" == "true" ]]; then
-                     log_step "Would remove: $dest/$basename (extraneous)"
-                 else
-                     rm -rf "$dest_item"
-                     log_step "Removed: $dest/$basename"
-                 fi
-                 ((count_clean++))
-             fi
-        else
-            # Not managed (filtered out) -> Keep it
-            :
+        # Destination directory is owned by sync. Remove anything no longer selected.
+        # This guarantees stale generated entries are cleaned up when filters change.
+        if [[ "$source_items" != *"|$basename|"* ]]; then
+            if [[ "$dry_run" == "true" ]]; then
+                log_step "Would remove: $dest/$basename (extraneous)"
+            else
+                rm -rf "$dest_item"
+                log_step "Removed: $dest/$basename"
+            fi
+            ((count_clean++))
         fi
     done
     
@@ -377,24 +371,15 @@ sync_rules() {
         
         if [[ "$is_managed" == "true" ]]; then
             if [[ "$valid_dest_files" != *"|$basename|"* ]]; then
-                # Potentially checking filter reverse logic
-                local src_basename=""
-                if [[ -n "$new_ext" ]]; then
-                    src_basename="${basename%$new_ext}.md"
+                # Destination rules directory is sync-managed: delete obsolete outputs
+                # even when the current include/exclude filters were changed.
+                if [[ "$dry_run" == "true" ]]; then
+                    log_step "Would remove: $dest_dir/$basename (obsolete)"
                 else
-                    src_basename="$basename"
+                    rm -f "$dest_file"
+                    log_step "Removed: $dest_dir/$basename"
                 fi
-                
-                # Only delete if it would have been included by our filter
-                if matches_filter "$src_basename" "$include" "$exclude"; then
-                   if [[ "$dry_run" == "true" ]]; then
-                       log_step "Would remove: $dest_dir/$basename (obsolete)"
-                   else
-                       rm -f "$dest_file"
-                       log_step "Removed: $dest_dir/$basename"
-                   fi
-                   ((count_clean++))
-                fi
+                ((count_clean++))
             fi
         fi
     done
