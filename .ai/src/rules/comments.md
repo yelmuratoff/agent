@@ -9,3 +9,10 @@
 - **Document Public APIs**: Use `///` documentation comments for libraries and public members.
 - **Standardize Formatting**: Begin all comments with a single space `// Like this` for readability.
 - **Refactor First**: Prioritize renaming variables and functions to clarify intent before resorting to comments.
+
+## Public API Docs
+
+- **Summary First**: Start doc comments with a single-sentence summary that ends with a period.
+- **Placement**: Put doc comments before annotations.
+- **Behavioral Details**: Document non-obvious side effects, constraints, and thrown exceptions for public APIs.
+- **Avoid Duplication**: Do not document both getter and setter for the same property unless behavior differs.

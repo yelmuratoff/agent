@@ -9,6 +9,8 @@ trigger: always_on
 - **ThemeData**: Define a centralized `ThemeData`.
 - **ColorScheme**: Always generate palettes using `ColorScheme.fromSeed`.
 - **Extensions**: Use `ThemeExtension` for custom design tokens (colors/styles not in Material).
+- **Theme Modes**: When dark mode is supported, define `theme`, `darkTheme`, and `themeMode`.
+- **Component States**: Style interactive components with `WidgetStateProperty` in theme definitions.
 - **Hardcoding**: Do not hardcode colors or styles in widgets; access everything via `Theme.of(context)`.
 
 ## Layout Best Practices
@@ -27,7 +29,7 @@ trigger: always_on
 
 ## Accessibility (A11Y)
 
-- **Contrast**: Ensure text has at least **4.5:1** contrast ratio.
+- **Contrast**: Ensure text has at least **4.5:1** contrast ratio (or **3:1** for large text).
 - **Scaling**: UI must remain usable when system font size is increased (test dynamic type).
 - **Semantics**: Use `Semantics` widget for screen reader labels.
 - **Touch Targets**: Ensure interactive elements are at least 48x48dp.

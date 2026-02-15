@@ -10,6 +10,7 @@
 
 - Use Given/When/Then structure and clear naming.
 - Tests must be deterministic (no real HTTP, no real clocks, no randomness).
+- Prefer fakes/stubs over mocks; use mocks only when interaction verification is required.
 - Mock I/O boundaries (HTTP, database, preferences, secure storage).
 
 ## Coverage Expectations

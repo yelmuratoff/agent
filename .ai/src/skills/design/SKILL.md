@@ -41,6 +41,19 @@ Text(
 );
 ```
 
+When supporting dark mode, wire all three on `MaterialApp`:
+
+```dart
+MaterialApp(
+  theme: lightTheme,
+  darkTheme: darkTheme,
+  themeMode: ThemeMode.system,
+);
+```
+
+Define component interaction styles in theme objects via `WidgetStateProperty`
+instead of inline button styles.
+
 ### 2) Responsive Layouts
 
 Use `LayoutBuilder` to switch between mobile and desktop/tablet layouts.
