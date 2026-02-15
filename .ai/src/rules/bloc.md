@@ -8,7 +8,9 @@
 
 ## Core Constraints (BLoC/Cubit)
 
-- Events and states are `sealed class` hierarchies (manual, no codegen).
+- Events are `sealed class` hierarchies (manual, no codegen).
+- Default state modeling: `sealed class` hierarchies with explicit payload per state.
+- Exception: for multi-step forms/progressive input where previous field values must persist, use one immutable state class with a status enum + `copyWith`.
 - Do not use `freezed` or `json_serializable` in BLoC/state code.
 - Use `EquatableMixin` only when the type has fields that affect equality.
 - State subtype names end with `State`; use Dart 3 `switch` for exhaustiveness (no manual “when” APIs).

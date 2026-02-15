@@ -21,6 +21,11 @@ Quick rule:
 - If it only holds ephemeral UI state: Cubit.
 - If it’s a tiny widget-scoped controller and BLoC would be noise: Provider.
 
+State-shape rule:
+
+- Prefer `sealed` states when each state has distinct payloads (`Loading/Loaded/Error`).
+- For progressive forms where previously entered values must survive status changes, use one immutable state + enum status + `copyWith`.
+
 ### 2) Define events (sealed, manual)
 
 ```dart
@@ -146,6 +151,7 @@ Use `bloc_test` and mock repositories. Cover:
 - success path
 - expected failures (network/timeout/cache)
 - concurrency behavior (e.g., restartable cancels previous)
+- order-sensitive event tests (insert `await Future<void>.delayed(Duration.zero)` between `add(...)` calls when needed)
 
 Example:
 

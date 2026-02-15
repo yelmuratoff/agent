@@ -15,7 +15,9 @@ description: When writing unit/widget tests for repositories, DTO parsing, and B
 
 ### 1) Organize tests to mirror source folders
 
-Keep `test/` structure aligned with the source layout so ownership and coverage are obvious.
+- Keep `test/` structure aligned with the source layout so ownership and coverage are obvious.
+- Do not add dedicated tests for pure barrel export files.
+- Group tests by behavior domain (render/navigation, BLoC event name, repository method name).
 
 ### 2) Unit test pure logic first
 
@@ -89,6 +91,16 @@ void main() {
     expect: () => [const OrdersLoadingState(), const OrdersLoadedState(orders: [])],
   );
 }
+```
+
+If event ordering is part of the expected behavior, separate event dispatches in `act`:
+
+```dart
+act: (bloc) async {
+  bloc.add(const FirstEvent());
+  await Future<void>.delayed(Duration.zero);
+  bloc.add(const SecondEvent());
+},
 ```
 
 ### 5) Keep widget tests focused

@@ -15,6 +15,7 @@
 - Presentation depends only on domain contracts; it never imports a feature’s data layer.
 - Domain has zero Flutter/framework imports.
 - Data implements domain interfaces and contains all I/O details.
+- Presentation screens follow a `Screen` + `View` split: `Screen` wires route/dependencies, `View` contains UI for easier widget testing.
 
 ## Models & Serialization
 

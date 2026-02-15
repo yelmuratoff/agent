@@ -53,6 +53,11 @@ Dependency direction:
 - `domain/` contains only Dart code (no Flutter imports).
 - `data/` implements domain interfaces and contains all I/O details.
 
+Presentation convention:
+
+- `<Feature>Screen`: route/dependency wiring only.
+- `<Feature>View`: UI implementation only (easy to test with mocked dependencies).
+
 ### 3) Define domain contracts (interfaces, types)
 
 Keep domain minimal and stable:

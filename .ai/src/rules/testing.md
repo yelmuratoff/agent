@@ -13,10 +13,12 @@
 - Prefer fakes/stubs over mocks; use mocks only when interaction verification is required.
 - Mock I/O boundaries (HTTP, database, preferences, secure storage).
 - Organize `test/` to mirror source structure for discoverability.
+- Group tests by behavior domain (for example: renders/navigation for widgets, event names for BLoCs, method names for repositories).
 - Keep one behavior/scenario per test for easier debugging.
 - Every test must end with explicit assertions (`expect`/`verify`) tied to behavior.
 - Keep `setUp`/`tearDown` scoped to `group(...)` blocks, not at file top level.
 - Initialize mutable collaborators per test; never share mutable/static state across tests.
+- Do not add dedicated tests for pure barrel export files.
 
 ## Coverage Expectations
 

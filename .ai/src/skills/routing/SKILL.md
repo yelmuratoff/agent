@@ -14,6 +14,7 @@ description: When adding screens, deep links, or complex navigation flows using 
 ## Setup
 
 Define a centralized `local_router.dart` (or similar) in `core/router/` or `app/router/`.
+Prefer nested/sub-routes over a flat list so deep links and back navigation remain predictable.
 
 ```dart
 final goRouter = GoRouter(
@@ -42,6 +43,7 @@ final goRouter = GoRouter(
 ### 1) Type-Safe Arguments
 
 - Use path parameters for IDs (e.g. `details/:id`).
+- Use query parameters for filtering/sorting state (for example: `?status=paid&page=2`).
 - Use `extra` for complex objects **only if necessary**. Prefer passing an ID and refetching data to ensure the screen is independent and deep-linkable.
 - Prefer typed routes or `goNamed` over raw path strings where possible.
 - Keep route path segments lowercase `kebab-case` (for example `user/update-address`).
@@ -66,3 +68,4 @@ redirect: (context, state) {
 
 - Use `context.go('/details/123')` or `context.goNamed(...)` for normal app/deep-linkable navigation.
 - Use `context.push('/details/123')` when the route is transient and should return a result on pop.
+- Prefer `BuildContext` extensions (`context.goNamed`, `context.pushNamed`) over `GoRouter.of(context)` for consistency.

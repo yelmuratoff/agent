@@ -8,16 +8,19 @@
 ## Structure
 
 - Define a centralized `GoRouter` configuration (e.g., in `core/router/`).
+- Prefer nested/sub-routes over a flat root-level route list to preserve hierarchy and back navigation semantics.
 - Use separate route files or static constants for route paths/names to avoid string literals in UI code.
 
 ## Type Safety
 
 - Prefer typed routes (using `go_router_builder` if available in the project, or strict `extra` object definitions).
 - Prefer route names (`goNamed`/typed route APIs) over raw path strings where possible.
+- Use path params for resource identity and query params for filtering/sorting state.
 - Pass complex objects via `extra`, but prefer passing IDs and re-fetching data in the new screen's BLoC/Repository.
 
 ## Navigation Semantics
 
 - Prefer `go`/`goNamed` for normal app navigation and deep-linkable flows.
 - Use `push`/`pushNamed` when you need a result back from transient routes (dialogs, pickers, short-lived flows).
+- Prefer `BuildContext` navigation extensions (`context.goNamed`, `context.pushNamed`) over direct `GoRouter.of(context)` calls.
 - Keep URL path segments lowercase `kebab-case` (for example: `/user/update-address`).
