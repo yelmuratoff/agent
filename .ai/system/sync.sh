@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # chmod +x .ai/sync/sync.sh
-# Cross-platform AI Agent Config Sync Script
+# Cross-platform AgentSync Config Sync Script
 # Works in Git Bash on Windows and Unix/macOS
 
 set -euo pipefail
@@ -30,7 +30,7 @@ TOTAL_COUNT=0
 # Usage information
 usage() {
     cat << EOF
-AI Agent Config Sync Script
+AgentSync Config Sync Script
 
 Usage: $(basename "$0") [OPTIONS]
 
@@ -224,9 +224,9 @@ main() {
     
     log_separator
     if [[ "$DRY_RUN" == "true" ]]; then
-        log_info "Starting AI Agent Config Sync (DRY RUN)..."
+        log_info "Starting AgentSync Config Sync (DRY RUN)..."
     else
-        log_info "Starting AI Agent Config Sync..."
+        log_info "Starting AgentSync Config Sync..."
     fi
     log_separator
     echo ""

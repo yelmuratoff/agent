@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Check if AI configs are in sync with source
+# Check if AgentSync configs are in sync with source
 # Usage: .ai/sync/check.sh
 # Exit code: 0 if synced, 1 if changes needed
 
@@ -19,7 +19,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 # 2. Run sync
 # 3. Check if any target files changed
 
-echo "Checking AI config synchronization..."
+echo "Checking AgentSync configuration synchronization..."
 
 # Ensure we are executable
 chmod +x "$SCRIPT_DIR/sync.sh"
@@ -60,10 +60,10 @@ done
 
 if [[ $CHANGED -eq 1 ]]; then
     echo ""
-    echo "⚠️  AI Configurations are out of sync with .ai/ source."
+    echo "⚠️  AgentSync configurations are out of sync with .ai/ source."
     echo "Please run: .ai/sync/sync.sh"
     exit 1
 else
-    echo "✅ AI Configurations are safe and synced."
+    echo "✅ AgentSync configurations are safe and synced."
     exit 0
 fi

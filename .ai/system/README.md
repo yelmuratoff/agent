@@ -1,4 +1,4 @@
-# AI Config Sync System
+# AgentSync System
 
 This directory contains the sync engine that maps `.ai/src/*` to tool-specific config layouts.
 

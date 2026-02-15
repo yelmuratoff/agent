@@ -1,6 +1,6 @@
-# AI Agent Configuration Workspace
+# AgentSync (`agent_sync`)
 
-This repository centralizes AI agent instructions in one source and syncs them to tool-specific formats.
+AgentSync is a configuration sync workspace/library that centralizes AI agent instructions in one source and syncs them to tool-specific formats.
 
 ## Source of Truth
 

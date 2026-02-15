@@ -1,6 +1,6 @@
-# AI Configuration Manual
+# AgentSync Manual
 
-`.ai/` is the authoring workspace for all shared AI behavior in this repository.
+`.ai/` is the authoring workspace for AgentSync (`agent_sync`) and all shared AI behavior in this repository.
 
 ## What to Edit
 
