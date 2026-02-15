@@ -13,23 +13,14 @@ source:
   agents: ".ai/src/AGENTS.md"
   rules: ".ai/src/rules"
   skills: ".ai/src/skills"
+  tools: ".ai/src/tools"
 ```
 
 ### Generated outputs
 
-Outputs are defined per tool in `.ai/system/tools/*.yaml`.
+Outputs are defined per tool in `.ai/src/tools/*.yaml` (configurable via `source.tools` in `.ai/system/config.yaml`).
 
-Currently enabled:
-
-- `.agent/*` (Antigravity)
-- `.claude/*` (Claude Code)
-- `.github/copilot-instructions.md`, `.github/instructions/*`, `.github/skills/*` (Copilot)
-- `.gemini/*` (Gemini CLI)
-
-Currently disabled:
-
-- `.codex/*`
-- `.cursor/*`
+Enabled/disabled tool outputs are controlled by each file's `enabled` flag in `.ai/src/tools/*.yaml`.
 
 ## Commands
 
@@ -66,7 +57,7 @@ Validation helper:
 .ai/system/check.sh
 ```
 
-## `tools/*.yaml` Schema
+## `.ai/src/tools/*.yaml` Schema
 
 Minimal:
 
@@ -96,11 +87,11 @@ Supported optional fields:
 - `targets.skills.exclude`: exclude glob for skill folder names
 - `post_sync`: shell command run after successful sync of that tool
 
-Reference template: `.ai/system/tools/_TEMPLATE.yaml`
+Reference template: `.ai/src/tools/_TEMPLATE.yaml`
 
 ## Sync Behavior
 
-For each `tools/*.yaml` file:
+For each `.ai/src/tools/*.yaml` file:
 
 1. Read `name`, `enabled`, and target paths.
 2. If disabled, clean existing generated paths for that tool.
@@ -130,13 +121,12 @@ It inserts generated paths for all enabled tools and keeps the rest of `.gitigno
 ├── check.sh           # Verification helper
 ├── lib/files.sh       # Copy/sync/filter operations
 ├── lib/yaml.sh        # Lightweight YAML parser
-├── lib/gitignore.sh   # Generated block updater
-└── tools/*.yaml       # Per-tool mapping configs
+└── lib/gitignore.sh   # Generated block updater
 ```
 
 ## Add a New Tool
 
-1. Copy `.ai/system/tools/_TEMPLATE.yaml` to `.ai/system/tools/<tool>.yaml`.
+1. Copy `.ai/src/tools/_TEMPLATE.yaml` to `.ai/src/tools/<tool>.yaml`.
 2. Fill `name`, set `enabled: true`, and configure all target destinations.
 3. Add optional transforms (`extension`, `header`, `include/exclude`) only if needed.
 4. Run `.ai/system/sync.sh --only <tool>`.

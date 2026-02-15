@@ -9,6 +9,7 @@ Edit:
 - `.ai/src/AGENTS.md`
 - `.ai/src/rules/*.md`
 - `.ai/src/skills/*/SKILL.md`
+- `.ai/src/tools/*.yaml`
 
 Do not edit generated targets directly:
 
@@ -26,14 +27,14 @@ Do not edit generated targets directly:
 ├── src/                    # Source of truth
 │   ├── AGENTS.md
 │   ├── rules/
-│   └── skills/
-├── system/                 # Sync scripts and tool mapping
+│   ├── skills/
+│   └── tools/
+├── system/                 # Sync engine scripts
 │   ├── sync.sh
 │   ├── setup_hooks.sh
 │   ├── check.sh
 │   ├── config.yaml
-│   ├── lib/
-│   └── tools/
+│   └── lib/
 ├── docs/                   # Internal notes
 └── tasks/                  # Task drafts / work items
 ```

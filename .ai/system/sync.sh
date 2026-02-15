@@ -245,9 +245,22 @@ main() {
         exit 1
     fi
     
+    # Resolve tool configuration directory
+    local tools_dir_rel tools_dir_abs
+    tools_dir_rel=$(parse_yaml_value "$global_config" "source.tools") || true
+    if [[ -z "$tools_dir_rel" ]]; then
+        tools_dir_rel=".ai/system/tools"
+        log_warning "source.tools is not set in config.yaml, falling back to $tools_dir_rel"
+    fi
+    tools_dir_abs="$REPO_ROOT/$tools_dir_rel"
+    if [[ ! -d "$tools_dir_abs" ]]; then
+        log_error "Tool config directory not found: $tools_dir_abs"
+        exit 1
+    fi
+
     # Process each tool config
     local generated_paths=""
-    for tool_config in "$SCRIPT_DIR/tools"/*.yaml; do
+    for tool_config in "$tools_dir_abs"/*.yaml; do
         [[ -f "$tool_config" ]] || continue
         ((TOTAL_COUNT++)) || true
         

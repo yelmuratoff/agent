@@ -12,19 +12,19 @@ Do not edit generated tool folders directly (`.agent/`, `.claude/`, `.gemini/`, 
 ├── src/                  # Authoring source (edit here)
 │   ├── AGENTS.md
 │   ├── rules/*.md
-│   └── skills/*/SKILL.md
+│   ├── skills/*/SKILL.md
+│   └── tools/*.yaml        # Tool enable/disable + targets (edit here)
 ├── system/               # Sync engine
 │   ├── sync.sh
 │   ├── setup_hooks.sh
 │   ├── check.sh
-│   ├── config.yaml
-│   └── tools/*.yaml
+│   └── config.yaml
 └── README.md             # Authoring guide
 ```
 
 ## Tool Targets
 
-Enabled tools are defined in `.ai/system/tools/*.yaml`.
+Enabled tools are defined in `.ai/src/tools/*.yaml`.
 
 ## Workflow
 
@@ -65,7 +65,7 @@ This installs `post-merge` and `post-checkout` hooks that run `.ai/system/sync.s
 - `# --- AI SYNC GENERATED START ---`
 - `# --- AI SYNC GENERATED END ---`
 
-This block is rebuilt from enabled tool targets in `.ai/system/tools/*.yaml`.
+This block is rebuilt from enabled tool targets in `.ai/src/tools/*.yaml`.
 
 ## Documentation Map
 

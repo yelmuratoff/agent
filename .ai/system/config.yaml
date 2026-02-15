@@ -5,6 +5,7 @@ source:
   agents: ".ai/src/AGENTS.md"
   rules: ".ai/src/rules"
   skills: ".ai/src/skills"
+  tools: ".ai/src/tools"
 
 # Default settings for all tools
 defaults:

@@ -1,5 +1,5 @@
 # Template for AI Tool Configuration
-# Copy this file to "toolname.yaml" to add a new tool.
+# Copy this file inside `.ai/src/tools/` as "<tool>.yaml" to add a new tool.
 
 # Name of the tool (displayed in logs)
 name: "Tool Name"
