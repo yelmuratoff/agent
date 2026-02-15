@@ -17,7 +17,8 @@ fi
 
 REPO_ROOT="$(cd "$REPO_ROOT" && pwd)"
 TEMP_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/agent_sync_check.XXXXXX")"
-trap 'rm -rf "$TEMP_ROOT"' EXIT
+SYNC_LOG="$(mktemp "${TMPDIR:-/tmp}/agent_sync_check_sync.XXXXXX")"
+trap 'rm -rf "$TEMP_ROOT"; rm -f "$SYNC_LOG"' EXIT
 
 echo "Checking AgentSync configuration synchronization..."
 
@@ -28,8 +29,10 @@ if ! (cd "$REPO_ROOT" && tar --exclude='.git' -cf - .) | (cd "$TEMP_ROOT" && tar
 fi
 
 # Run sync in temporary workspace. This keeps the caller repository read-only.
-if ! AGENTSYNC_REPO_ROOT="$TEMP_ROOT" AGENTSYNC_SKIP_POST_SYNC=true "$SCRIPT_DIR/sync.sh" >/dev/null 2>&1; then
+if ! AGENTSYNC_REPO_ROOT="$TEMP_ROOT" AGENTSYNC_SKIP_POST_SYNC=true "$SCRIPT_DIR/sync.sh" >"$SYNC_LOG" 2>&1; then
     echo "❌ Sync script failed during check"
+    echo "Sync output (last 40 lines):"
+    tail -n 40 "$SYNC_LOG"
     exit 1
 fi
 

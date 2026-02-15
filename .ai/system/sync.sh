@@ -16,6 +16,7 @@ if [[ ! -d "$REPO_ROOT" ]]; then
 fi
 
 REPO_ROOT="$(cd "$REPO_ROOT" && pwd)"
+REPO_ROOT_CANONICAL="$(cd -P "$REPO_ROOT" && pwd)"
 
 # Source helper libraries
 # shellcheck source=lib/logging.sh
@@ -190,8 +191,52 @@ normalize_absolute_path() {
 }
 
 is_path_within_repo_root() {
-    local abs_path="$1"
-    [[ "$abs_path" == "$REPO_ROOT" || "$abs_path" == "$REPO_ROOT/"* ]]
+    local candidate_path="$1"
+    [[ "$candidate_path" == "$REPO_ROOT_CANONICAL" || "$candidate_path" == "$REPO_ROOT_CANONICAL/"* ]]
+}
+
+resolve_existing_ancestor() {
+    local path="$1"
+    local current="$path"
+    while [[ ! -e "$current" ]]; do
+        local parent
+        parent=$(dirname "$current")
+        if [[ "$parent" == "$current" ]]; then
+            break
+        fi
+        current="$parent"
+    done
+
+    echo "$current"
+}
+
+canonicalize_with_existing_ancestor() {
+    local path="$1"
+    local existing_ancestor
+    existing_ancestor=$(resolve_existing_ancestor "$path")
+
+    local existing_ancestor_canonical
+    if [[ -d "$existing_ancestor" ]]; then
+        existing_ancestor_canonical=$(cd -P "$existing_ancestor" 2>/dev/null && pwd) || return 1
+    else
+        local ancestor_parent
+        ancestor_parent=$(dirname "$existing_ancestor")
+        local ancestor_parent_canonical
+        ancestor_parent_canonical=$(cd -P "$ancestor_parent" 2>/dev/null && pwd) || return 1
+        existing_ancestor_canonical="$ancestor_parent_canonical/$(basename "$existing_ancestor")"
+    fi
+
+    if [[ "$path" == "$existing_ancestor" ]]; then
+        echo "$existing_ancestor_canonical"
+        return 0
+    fi
+
+    local suffix="${path#"$existing_ancestor"}"
+    if [[ -n "$suffix" ]] && [[ "$suffix" != /* ]]; then
+        suffix="/$suffix"
+    fi
+
+    normalize_absolute_path "$existing_ancestor_canonical$suffix"
 }
 
 resolve_repo_path() {
@@ -205,8 +250,14 @@ resolve_repo_path() {
 
     local abs_path
     abs_path=$(normalize_absolute_path "$raw_path")
-    if ! is_path_within_repo_root "$abs_path"; then
-        log_error "$label resolves outside repository root: $raw_path -> $abs_path"
+    local canonical_path
+    canonical_path=$(canonicalize_with_existing_ancestor "$abs_path") || {
+        log_error "Failed to canonicalize $label path: $raw_path"
+        return 1
+    }
+
+    if ! is_path_within_repo_root "$canonical_path"; then
+        log_error "$label resolves outside repository root: $raw_path -> $canonical_path"
         return 1
     fi
 
