@@ -516,7 +516,10 @@ sync_tool() {
     post_sync_cmd=$(parse_yaml_value "$tool_config" "post_sync") || true
     
     if [[ "$DRY_RUN" != "true" ]]; then
-        run_post_sync_hook "$tool_name" "$post_sync_cmd" || true
+        if ! run_post_sync_hook "$tool_name" "$post_sync_cmd"; then
+            log_error "Sync failed because post-sync hook failed for $tool_name"
+            return 1
+        fi
     fi
      
     log_success "$tool_name complete"
