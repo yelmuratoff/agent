@@ -148,6 +148,87 @@ resolve_source_override() {
     echo "$direct"
 }
 
+# Normalize a path lexically into an absolute path.
+# Works even if the target does not exist yet.
+normalize_absolute_path() {
+    local path="$1"
+    if [[ "$path" != /* ]]; then
+        path="$REPO_ROOT/$path"
+    fi
+
+    local -a segments normalized_segments
+    IFS='/' read -r -a segments <<< "$path"
+    normalized_segments=()
+
+    local segment
+    for segment in "${segments[@]}"; do
+        case "$segment" in
+            ""|".")
+                continue
+                ;;
+            "..")
+                if [[ ${#normalized_segments[@]} -gt 0 ]]; then
+                    unset 'normalized_segments[${#normalized_segments[@]}-1]'
+                fi
+                ;;
+            *)
+                normalized_segments+=("$segment")
+                ;;
+        esac
+    done
+
+    local normalized="/"
+    if [[ ${#normalized_segments[@]} -gt 0 ]]; then
+        normalized="/${normalized_segments[0]}"
+        local index
+        for ((index = 1; index < ${#normalized_segments[@]}; index++)); do
+            normalized="$normalized/${normalized_segments[$index]}"
+        done
+    fi
+
+    echo "$normalized"
+}
+
+is_path_within_repo_root() {
+    local abs_path="$1"
+    [[ "$abs_path" == "$REPO_ROOT" || "$abs_path" == "$REPO_ROOT/"* ]]
+}
+
+resolve_repo_path() {
+    local raw_path="$1"
+    local label="$2"
+
+    if [[ -z "$raw_path" ]]; then
+        log_error "$label is empty"
+        return 1
+    fi
+
+    local abs_path
+    abs_path=$(normalize_absolute_path "$raw_path")
+    if ! is_path_within_repo_root "$abs_path"; then
+        log_error "$label resolves outside repository root: $raw_path -> $abs_path"
+        return 1
+    fi
+
+    echo "$abs_path"
+}
+
+to_repo_relative_path() {
+    local abs_path="$1"
+    if [[ "$abs_path" == "$REPO_ROOT" ]]; then
+        echo "."
+        return 0
+    fi
+
+    if [[ "$abs_path" == "$REPO_ROOT/"* ]]; then
+        echo "${abs_path#$REPO_ROOT/}"
+        return 0
+    fi
+
+    log_error "Path is outside repository root: $abs_path"
+    return 1
+}
+
 # Parse command line arguments
 parse_args() {
     while [[ $# -gt 0 ]]; do
@@ -247,14 +328,19 @@ sync_tool() {
     dest_agents=$(parse_yaml_value "$tool_config" "targets.agents.dest")
     dest_rules=$(parse_yaml_value "$tool_config" "targets.rules.dest")
     dest_skills=$(parse_yaml_value "$tool_config" "targets.skills.dest")
+
+    local dest_agents_abs="" dest_rules_abs="" dest_skills_abs=""
+    [[ -n "$dest_agents" ]] && dest_agents_abs=$(resolve_repo_path "$dest_agents" "targets.agents.dest for $tool_name")
+    [[ -n "$dest_rules" ]] && dest_rules_abs=$(resolve_repo_path "$dest_rules" "targets.rules.dest for $tool_name")
+    [[ -n "$dest_skills" ]] && dest_skills_abs=$(resolve_repo_path "$dest_skills" "targets.skills.dest for $tool_name")
     
     # Check if tool is enabled in config
     if ! parse_yaml_bool "$tool_config" "enabled"; then
         # Cleanup disabled tool directories
         local cleaned=false
-        [[ -n "$dest_agents" ]] && cleanup_path "$REPO_ROOT/$dest_agents" "$DRY_RUN" && cleaned=true
-        [[ -n "$dest_rules" ]] && cleanup_path "$REPO_ROOT/$dest_rules" "$DRY_RUN" && cleaned=true
-        [[ -n "$dest_skills" ]] && cleanup_path "$REPO_ROOT/$dest_skills" "$DRY_RUN" && cleaned=true
+        [[ -n "$dest_agents_abs" ]] && cleanup_path "$dest_agents_abs" "$DRY_RUN" && cleaned=true
+        [[ -n "$dest_rules_abs" ]] && cleanup_path "$dest_rules_abs" "$DRY_RUN" && cleaned=true
+        [[ -n "$dest_skills_abs" ]] && cleanup_path "$dest_skills_abs" "$DRY_RUN" && cleaned=true
         
         if [[ "$cleaned" == "true" ]]; then
             log_info "Cleaned up $tool_name (disabled)"
@@ -279,10 +365,12 @@ sync_tool() {
     local override_agents src_agents
     override_agents=$(parse_yaml_value "$tool_config" "targets.agents.source")
     src_agents="${override_agents:-$SOURCE_AGENTS}"
+    local src_agents_abs
+    src_agents_abs=$(resolve_repo_path "$src_agents" "targets.agents.source for $tool_name")
     
     # Sync AGENTS.md
-    if [[ -n "$dest_agents" ]]; then
-        copy_file "$REPO_ROOT/$src_agents" "$REPO_ROOT/$dest_agents" "$DRY_RUN"
+    if [[ -n "$dest_agents_abs" ]]; then
+        copy_file "$src_agents_abs" "$dest_agents_abs" "$DRY_RUN"
     fi
     
     # 2. RULES
@@ -290,6 +378,8 @@ sync_tool() {
     local override_rules src_rules
     override_rules=$(parse_yaml_value "$tool_config" "targets.rules.source")
     src_rules="${override_rules:-$SOURCE_RULES}"
+    local src_rules_abs
+    src_rules_abs=$(resolve_repo_path "$src_rules" "targets.rules.source for $tool_name")
     
     # Read optional rule transformations and filters
     local rule_ext rule_header append_imports rule_include rule_exclude
@@ -300,15 +390,19 @@ sync_tool() {
     rule_exclude=$(parse_yaml_value "$tool_config" "targets.rules.exclude") || true
     
     # Sync rules
-    if [[ -n "$dest_rules" ]]; then
-        sync_rules "$REPO_ROOT/$src_rules" "$REPO_ROOT/$dest_rules" "$rule_ext" "$rule_header" "$DRY_RUN" "$rule_include" "$rule_exclude"
+    if [[ -n "$dest_rules_abs" ]]; then
+        sync_rules "$src_rules_abs" "$dest_rules_abs" "$rule_ext" "$rule_header" "$DRY_RUN" "$rule_include" "$rule_exclude"
         
         # Handle Claude's import appending
         if [[ "$append_imports" == "true" ]] && [[ "$DRY_RUN" != "true" ]]; then
-            # Note: Imports should technically only include filtered rules, but append_imports scans the DEST dir
-            # so it naturally picks up only what was copied. Correct.
-            append_imports "$REPO_ROOT/$dest_agents" "$REPO_ROOT/$dest_rules"
-            log_step "Appended @rules imports to $dest_agents"
+            if [[ -n "$dest_agents_abs" ]]; then
+                # Note: Imports should technically only include filtered rules, but append_imports scans the DEST dir
+                # so it naturally picks up only what was copied. Correct.
+                append_imports "$dest_agents_abs" "$dest_rules_abs"
+                log_step "Appended @rules imports to $dest_agents"
+            else
+                log_warning "Skipping append_imports for $tool_name because targets.agents.dest is missing"
+            fi
         fi
     fi
     
@@ -317,6 +411,8 @@ sync_tool() {
     local override_skills src_skills
     override_skills=$(parse_yaml_value "$tool_config" "targets.skills.source")
     src_skills="${override_skills:-$SOURCE_SKILLS}"
+    local src_skills_abs
+    src_skills_abs=$(resolve_repo_path "$src_skills" "targets.skills.source for $tool_name")
     
     # Read skill filters
     local skills_include skills_exclude
@@ -324,8 +420,8 @@ sync_tool() {
     skills_exclude=$(parse_yaml_value "$tool_config" "targets.skills.exclude") || true
     
     # Sync skills directory
-    if [[ -n "$dest_skills" ]]; then
-        sync_dir "$REPO_ROOT/$src_skills" "$REPO_ROOT/$dest_skills" "$DRY_RUN" "$skills_include" "$skills_exclude"
+    if [[ -n "$dest_skills_abs" ]]; then
+        sync_dir "$src_skills_abs" "$dest_skills_abs" "$DRY_RUN" "$skills_include" "$skills_exclude"
     fi
     
     # 4. POST_SYNC
@@ -391,15 +487,19 @@ main() {
         log_warning "source.tools is not set, falling back to $SOURCE_TOOLS"
     fi
 
-    if [[ ! -f "$REPO_ROOT/$SOURCE_AGENTS" ]]; then
-        log_error "Source agents file not found: $REPO_ROOT/$SOURCE_AGENTS"
+    local source_agents_abs source_tools_abs
+    source_agents_abs=$(resolve_repo_path "$SOURCE_AGENTS" "source.agents")
+    source_tools_abs=$(resolve_repo_path "$SOURCE_TOOLS" "source.tools")
+
+    if [[ ! -f "$source_agents_abs" ]]; then
+        log_error "Source agents file not found: $source_agents_abs"
         log_error "Expected either .ai/src layout, .ai layout, or agent_sync.yaml overrides"
         exit 1
     fi
 
-    local tools_dir_abs="$REPO_ROOT/$SOURCE_TOOLS"
+    local tools_dir_abs="$source_tools_abs"
     if [[ ! -d "$tools_dir_abs" ]]; then
-        log_error "Tool config directory not found: $tools_dir_abs"
+        log_error "Tool config directory not found: $source_tools_abs"
         log_error "Set source.tools in agent_sync.yaml if your layout is custom"
         exit 1
     fi
@@ -419,14 +519,27 @@ main() {
         # but here we follow config truth)
         if parse_yaml_bool "$tool_config" "enabled"; then
              # Collect paths for gitignore
-             local d_agents d_rules d_skills
+             local d_agents d_rules d_skills d_agents_abs d_rules_abs d_skills_abs
+             local d_agents_rel d_rules_rel d_skills_rel
              d_agents=$(parse_yaml_value "$tool_config" "targets.agents.dest")
              d_rules=$(parse_yaml_value "$tool_config" "targets.rules.dest")
              d_skills=$(parse_yaml_value "$tool_config" "targets.skills.dest")
-             
-             [[ -n "$d_agents" ]] && generated_paths="$generated_paths $d_agents"
-             [[ -n "$d_rules" ]] && generated_paths="$generated_paths $d_rules/"
-             [[ -n "$d_skills" ]] && generated_paths="$generated_paths $d_skills/"
+
+             if [[ -n "$d_agents" ]]; then
+                 d_agents_abs=$(resolve_repo_path "$d_agents" "targets.agents.dest in $tool_file_basename")
+                 d_agents_rel=$(to_repo_relative_path "$d_agents_abs")
+                 generated_paths="$generated_paths $d_agents_rel"
+             fi
+             if [[ -n "$d_rules" ]]; then
+                 d_rules_abs=$(resolve_repo_path "$d_rules" "targets.rules.dest in $tool_file_basename")
+                 d_rules_rel=$(to_repo_relative_path "$d_rules_abs")
+                 generated_paths="$generated_paths $d_rules_rel/"
+             fi
+             if [[ -n "$d_skills" ]]; then
+                 d_skills_abs=$(resolve_repo_path "$d_skills" "targets.skills.dest in $tool_file_basename")
+                 d_skills_rel=$(to_repo_relative_path "$d_skills_abs")
+                 generated_paths="$generated_paths $d_skills_rel/"
+             fi
         fi
 
         sync_tool "$tool_config"

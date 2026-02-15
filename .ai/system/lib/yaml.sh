@@ -7,6 +7,26 @@
 # Usage: parse_yaml_value "file.yaml" "key" OR "key.subkey" OR "key.subkey.subsubkey"
 # Returns: the value as string, or empty if not found
 # Always returns exit code 0 (safe for use with set -e)
+_yaml_normalize_scalar() {
+    local raw="$1"
+    local value
+    value=$(echo "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+
+    # Keep inline # only when the scalar is quoted.
+    if [[ "$value" =~ ^\"(.*)\"[[:space:]]*(#.*)?$ ]]; then
+        echo "${BASH_REMATCH[1]}"
+        return 0
+    fi
+    if [[ "$value" =~ ^\'(.*)\'[[:space:]]*(#.*)?$ ]]; then
+        echo "${BASH_REMATCH[1]}"
+        return 0
+    fi
+
+    value="${value%%#*}"
+    value=$(echo "$value" | sed 's/[[:space:]]*$//')
+    echo "$value"
+}
+
 parse_yaml_value() {
     local file="$1"
     local key_path="$2"
@@ -19,14 +39,6 @@ parse_yaml_value() {
     # Split key path into parts
     IFS='.' read -ra keys <<< "$key_path"
     local depth=${#keys[@]}
-    
-    # For single key (depth=1), just find the key at root level
-    if [[ $depth -eq 1 ]]; then
-        local result
-        result=$(grep -E "^${keys[0]}:" "$file" 2>/dev/null | head -1 | sed "s/^[^:]*:[[:space:]]*//; s/^[\"']//; s/[\"']$//")
-        echo "$result"
-        return 0
-    fi
     
     # For nested keys, we need to track indentation
     local in_section=false
@@ -48,8 +60,7 @@ parse_yaml_value() {
         if [[ "$stripped" =~ ^([a-zA-Z0-9_-]+):[[:space:]]*(.*) ]]; then
             line_key="${BASH_REMATCH[1]}"
             line_value="${BASH_REMATCH[2]}"
-            # Remove quotes from value
-            line_value=$(echo "$line_value" | sed "s/^[\"']//; s/[\"']$//")
+            line_value=$(_yaml_normalize_scalar "$line_value")
         elif [[ "$stripped" =~ ^([a-zA-Z0-9_-]+):$ ]]; then
             line_key="${BASH_REMATCH[1]}"
             line_value=""
@@ -119,5 +130,4 @@ parse_yaml_bool() {
             ;;
     esac
 }
-
 
