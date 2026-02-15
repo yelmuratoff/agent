@@ -31,6 +31,7 @@ source "$SCRIPT_DIR/lib/gitignore.sh"
 DRY_RUN="false"
 ONLY_TOOLS=""
 SKIP_TOOLS=""
+SKIP_POST_SYNC="${AGENTSYNC_SKIP_POST_SYNC:-false}"
 SYNCED_COUNT=0
 SKIPPED_COUNT=0
 TOTAL_COUNT=0
@@ -152,10 +153,20 @@ parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --only)
+                if [[ $# -lt 2 ]] || [[ "${2:-}" == --* ]]; then
+                    log_error "Option --only requires a comma-separated value"
+                    usage
+                    exit 1
+                fi
                 ONLY_TOOLS="$2"
                 shift 2
                 ;;
             --skip)
+                if [[ $# -lt 2 ]] || [[ "${2:-}" == --* ]]; then
+                    log_error "Option --skip requires a comma-separated value"
+                    usage
+                    exit 1
+                fi
                 SKIP_TOOLS="$2"
                 shift 2
                 ;;
@@ -298,10 +309,12 @@ sync_tool() {
     local post_sync_cmd
     post_sync_cmd=$(parse_yaml_value "$tool_config" "post_sync") || true
     
-    if [[ -n "$post_sync_cmd" ]] && [[ "$DRY_RUN" != "true" ]]; then
+    if [[ -n "$post_sync_cmd" ]] && [[ "$DRY_RUN" != "true" ]] && [[ "$SKIP_POST_SYNC" != "true" ]]; then
         log_info "Running post-sync hook: $post_sync_cmd"
         # Eval command in repo root
         (cd "$REPO_ROOT" && eval "$post_sync_cmd") || log_warning "Post-sync hook failed"
+    elif [[ -n "$post_sync_cmd" ]] && [[ "$SKIP_POST_SYNC" == "true" ]]; then
+        log_info "Skipping post-sync hook for $tool_name (AGENTSYNC_SKIP_POST_SYNC=true)"
     fi
      
     log_success "$tool_name complete"

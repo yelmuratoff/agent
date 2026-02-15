@@ -70,7 +70,9 @@ sync_dir() {
         return 1
     fi
     
-    ensure_dir "$dest"
+    if [[ "$dry_run" != "true" ]]; then
+        ensure_dir "$dest"
+    fi
     
     # 1. Identify valid source items (relative paths)
     local source_items=""
@@ -268,7 +270,9 @@ copy_rules() {
     # But if we have multiple sources filling one dir, full wipe hurts.
     # For now, stick to simple "wipe and fill" logic. if filtering reduces set, so be it.
     rm -rf "$dest_dir" 2>/dev/null || true
-    ensure_dir "$dest_dir"
+    if [[ "$dry_run" != "true" ]]; then
+        ensure_dir "$dest_dir"
+    fi
     
     # Process valid files
     for src_file in "${files_to_process[@]}"; do
@@ -315,7 +319,9 @@ sync_rules() {
         return 1
     fi
     
-    ensure_dir "$dest_dir"
+    if [[ "$dry_run" != "true" ]]; then
+        ensure_dir "$dest_dir"
+    fi
     
     local valid_dest_files=""
     local count_copy=0
