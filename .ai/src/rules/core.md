@@ -17,6 +17,8 @@
 - Apply SOLID/DRY/KISS/YAGNI to keep code changeable and simple.
 - Consistency: specific metric - aim for functions < 100 lines to ensure readability and single responsibility.
 - Keep `build()` methods side-effect free (no network calls, I/O, or heavy computation).
+- Prefer private widget classes over private methods that return `Widget` for reusable UI sections.
+- When using record types, destructure into named locals quickly; avoid long-lived `$1`/`$2` access.
 
 ## Null Safety
 

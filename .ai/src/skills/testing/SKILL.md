@@ -109,7 +109,27 @@ test('validates value', () {
 });
 ```
 
-### 6) Integration Tests
+### 6) Keep tests isolated and order-independent
+
+- Keep `setUp`/`tearDown` inside `group(...)` blocks.
+- Recreate mutable collaborators per test; avoid shared static mutable state.
+- Run randomized ordering periodically in CI to expose hidden coupling:
+
+```bash
+flutter test --test-randomize-ordering-seed random
+```
+
+### 7) Golden tests
+
+- Tag golden tests consistently (for example `golden`) so they can run separately.
+- Use `--update-goldens` only in explicit golden update workflows.
+
+```bash
+flutter test --tags golden
+flutter test --tags golden --update-goldens
+```
+
+### 8) Integration Tests
 
 Use `integration_test` for critical user flows (e.g., login, checkout).
 

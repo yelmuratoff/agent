@@ -22,7 +22,16 @@ Treat as sensitive unless proven otherwise:
 - PII: emails, phones, names, addresses, document numbers
 - payloads: request/response bodies may contain secrets or PII
 
-### 2) Store secrets only in flutter_secure_storage
+### 2) Apply OWASP baseline for sensitive features
+
+For auth, storage, and network-heavy changes, validate decisions against:
+
+- OWASP Mobile Top 10 (threat categories)
+- OWASP MASVS/MAS checklist (implementation verification)
+
+Document threat assumptions and chosen mitigations in PR notes or docs.
+
+### 3) Store secrets only in flutter_secure_storage
 
 Never store secrets in SharedPreferences, Drift, or plain files.
 
@@ -38,7 +47,7 @@ abstract interface class ISecureStorage {
 
 Inject `ISecureStorage` via `DependenciesContainer` and use it in repositories/datasources.
 
-### 3) Keep auth and storage testable
+### 4) Keep auth and storage testable
 
 Test security behavior with fakes:
 
@@ -66,8 +75,13 @@ final class InMemorySecureStorage implements ISecureStorage {
 }
 ```
 
-### 4) Prefer least-privilege data flow
+### 5) Prefer least-privilege data flow
 
 - UI reads only what it needs (selectors/scopes).
 - Avoid passing tokens through widget trees.
 - Keep sensitive operations inside repositories/datasources.
+
+### 6) Verify supply-chain and transport safety
+
+- Screen new dependencies for maintenance and known vulnerabilities before adoption.
+- Use HTTPS/TLS only for production traffic; never allow plaintext transport in release flows.

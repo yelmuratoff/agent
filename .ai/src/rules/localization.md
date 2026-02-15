@@ -14,6 +14,12 @@
 
 - Use ICU/plural rules instead of manual if/else string selection.
 
+## Directionality (RTL/LTR)
+
+- Use directional APIs (`EdgeInsetsDirectional`, `AlignmentDirectional`, `PositionedDirectional`) for UI that should mirror by locale.
+- Avoid hardcoded left/right spacing/alignment in user-facing layouts that must support RTL.
+- Verify critical icons/images for RTL behavior (`matchTextDirection` when mirroring is required).
+
 ## Testing
 
 - Cover critical strings and pluralization paths in unit/widget tests when logic depends on them.

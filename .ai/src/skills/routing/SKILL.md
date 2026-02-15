@@ -43,6 +43,8 @@ final goRouter = GoRouter(
 
 - Use path parameters for IDs (e.g. `details/:id`).
 - Use `extra` for complex objects **only if necessary**. Prefer passing an ID and refetching data to ensure the screen is independent and deep-linkable.
+- Prefer typed routes or `goNamed` over raw path strings where possible.
+- Keep route path segments lowercase `kebab-case` (for example `user/update-address`).
 
 ### 2) Redirects (Guards)
 
@@ -62,5 +64,5 @@ redirect: (context, state) {
 
 ### 3) Navigation
 
-- Use `context.go('/details/123')` to replace the stack (deep link style).
-- Use `context.push('/details/123')` to add to the stack (modal/imperative style).
+- Use `context.go('/details/123')` or `context.goNamed(...)` for normal app/deep-linkable navigation.
+- Use `context.push('/details/123')` when the route is transient and should return a result on pop.

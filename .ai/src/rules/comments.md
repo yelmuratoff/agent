@@ -10,6 +10,7 @@
 - **Standardize Formatting**: Begin all comments with a single space `// Like this` for readability.
 - **Refactor First**: Prioritize renaming variables and functions to clarify intent before resorting to comments.
 - **No Trailing Comments**: Avoid end-of-line comments that duplicate obvious code behavior.
+- **Mark Intentional No-Ops**: If a method intentionally does nothing (for interface/contract reasons), document that explicitly.
 
 ## Public API Docs
 

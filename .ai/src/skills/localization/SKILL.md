@@ -58,3 +58,13 @@ Widget build(BuildContext context) {
 ### 4) Test critical localization-driven logic
 
 If UI logic depends on localized output (rare), test with a fixed locale and golden/widget tests.
+
+### 5) Support directionality (RTL/LTR)
+
+Use directional widgets and values when layout should mirror by locale:
+
+- `EdgeInsetsDirectional` instead of fixed left/right paddings
+- `AlignmentDirectional` and `PositionedDirectional` for mirrored layouts
+- `matchTextDirection: true` for icons/images that should mirror in RTL
+
+Validate at least one critical screen in an RTL locale.
