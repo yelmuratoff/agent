@@ -11,6 +11,12 @@ knowledge/
 .claude/CLAUDE.md
 .claude/rules/
 .claude/skills/
+.codex/AGENTS.md
+.codex/prompts/
+.codex/skills/
+.cursor/AGENTS.md
+.cursor/rules/
+.cursor/skills/
 .gemini/GEMINI.md
 .gemini/prompts/
 .gemini/skills/

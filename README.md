@@ -22,31 +22,27 @@ Do not edit generated tool folders directly (`.agent/`, `.claude/`, `.gemini/`, 
 └── README.md             # Authoring guide
 ```
 
-## Current Tool Targets
+## Tool Targets
 
 Enabled tools are defined in `.ai/system/tools/*.yaml`.
-
-| Tool config | Status | Generated targets |
-| --- | --- | --- |
-| `antigravity.yaml` | enabled | `.agent/AGENTS.md`, `.agent/rules`, `.agent/skills` |
-| `claude.yaml` | enabled | `.claude/CLAUDE.md`, `.claude/rules`, `.claude/skills` |
-| `copilot.yaml` | enabled | `.github/copilot-instructions.md`, `.github/instructions`, `.github/skills` |
-| `gemini.yaml` | enabled | `.gemini/GEMINI.md`, `.gemini/prompts`, `.gemini/skills` |
-| `codex.yaml` | disabled | `.codex/*` (not generated) |
-| `cursor.yaml` | disabled | `.cursor/*` (not generated) |
 
 ## Workflow
 
 1. Edit source files in `.ai/src/`.
 2. Run sync:
+
 ```bash
 .ai/system/sync.sh
 ```
+
 3. Optional preview:
+
 ```bash
 .ai/system/sync.sh --dry-run
 ```
+
 4. Optional partial sync:
+
 ```bash
 .ai/system/sync.sh --only claude,copilot
 .ai/system/sync.sh --skip gemini
@@ -65,6 +61,7 @@ This installs `post-merge` and `post-checkout` hooks that run `.ai/system/sync.s
 ## Gitignore Behavior
 
 `sync.sh` updates the block between:
+
 - `# --- AI SYNC GENERATED START ---`
 - `# --- AI SYNC GENERATED END ---`
 
