@@ -4,6 +4,7 @@
 
 - Measure before optimizing; use Flutter DevTools and real metrics.
 - Avoid work on the UI thread that can be moved to isolates (parsing, heavy transforms).
+- Use `compute()` for CPU-intensive tasks (e.g., large JSON parsing, image processing) to prevent frame drops.
 
 ## UI & Rendering
 

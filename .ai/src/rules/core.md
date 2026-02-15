@@ -13,6 +13,7 @@
 
 - Prefer small, explicit Dart 3 code: immutable models, sealed hierarchies, exhaustive switches.
 - Apply SOLID/DRY/KISS/YAGNI to keep code changeable and simple.
+- Consistency: specific metric - aim for functions < 100 lines to ensure readability and single responsibility.
 
 ## Testing
 

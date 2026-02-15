@@ -1,0 +1,66 @@
+---
+name: routing
+description: When adding screens, deep links, or complex navigation flows using `go_router`.
+---
+
+# Routing (GoRouter)
+
+## When to use
+
+- Adding a new screen or feature entry point.
+- Implementing deep linking or redirection (e.g., AuthGuard).
+- Passing arguments between screens.
+
+## Setup
+
+Define a centralized `local_router.dart` (or similar) in `core/router/` or `app/router/`.
+
+```dart
+final goRouter = GoRouter(
+  initialLocation: '/',
+  debugLogDiagnostics: true,
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const HomePage(),
+      routes: [
+        GoRoute(
+          path: 'details/:id',
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return DetailPage(id: id);
+          },
+        ),
+      ],
+    ),
+  ],
+);
+```
+
+## Best Practices
+
+### 1) Type-Safe Arguments
+
+- Use path parameters for IDs (e.g. `details/:id`).
+- Use `extra` for complex objects **only if necessary**. Prefer passing an ID and refetching data to ensure the screen is independent and deep-linkable.
+
+### 2) Redirects (Guards)
+
+- implement `redirect` logic at the top level or per-route.
+
+```dart
+redirect: (context, state) {
+  final isLoggedIn = authBloc.state.isAuthenticated;
+  final isLoggingIn = state.uri.path == '/login';
+
+  if (!isLoggedIn && !isLoggingIn) return '/login';
+  if (isLoggedIn && isLoggingIn) return '/';
+
+  return null;
+},
+```
+
+### 3) Navigation
+
+- Use `context.go('/details/123')` to replace the stack (deep link style).
+- Use `context.push('/details/123')` to add to the stack (modal/imperative style).

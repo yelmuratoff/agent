@@ -94,4 +94,42 @@ Widget tests should verify:
 - key UI states (loading/error/loaded)
 - critical interactions
 
-Avoid coupling to implementation details; prefer semantics/text and stable keys.
+### 5) Use `package:checks` for Assertions
+
+For clearer failure messages and a fluent API, prefer `package:checks` over `matcher`:
+
+```dart
+import 'package:checks/checks.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+test('validates value', () {
+  final value = 42;
+  check(value).equals(42);
+  check(value).isGreaterThan(0);
+});
+```
+
+### 6) Integration Tests
+
+Use `integration_test` for critical user flows (e.g., login, checkout).
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:my_app/main.dart' as app;
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('full login flow', (tester) async {
+    app.main();
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('email_field')), 'test@example.com');
+    await tester.tap(find.byKey(const Key('login_btn')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome back!'), findsOneWidget);
+  });
+}
+```

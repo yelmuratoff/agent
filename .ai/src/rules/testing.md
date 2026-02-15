@@ -15,3 +15,8 @@
 ## Coverage Expectations
 
 - Prioritize meaningful coverage over percent goals; always cover error cases for critical flows.
+
+## Assertions & Integration
+
+- Use `package:checks` for assertions (clear failure messages, fluent API) where possible.
+- Use `integration_test` for critical user flows that span multiple screens/features.
