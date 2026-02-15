@@ -34,8 +34,14 @@ update_gitignore() {
     fi
     new_block="${new_block}${end_marker}"
     
-    # Check if markers exist
-    if grep -qF "$start_marker" "$gitignore_file"; then
+    local has_start=false
+    local has_end=false
+    grep -qF "$start_marker" "$gitignore_file" && has_start=true
+    grep -qF "$end_marker" "$gitignore_file" && has_end=true
+
+    # Replace block only when both markers are present.
+    # If markers are inconsistent, append a fresh block to avoid deleting user content.
+    if [[ "$has_start" == "true" ]] && [[ "$has_end" == "true" ]]; then
         # Markers exist: replace content between them.
         # Approach:
         # 1. Read file line by line
@@ -50,12 +56,12 @@ update_gitignore() {
 
         while IFS= read -r line || [[ -n "$line" ]]; do
             if [[ "$line" == "$start_marker" ]]; then
-                echo "$new_block" >> "$temp_file"
+                printf '%s\n' "$new_block" >> "$temp_file"
                 skip=1
             elif [[ "$line" == "$end_marker" ]]; then
                 skip=0
             elif [[ $skip -eq 0 ]]; then
-                echo "$line" >> "$temp_file"
+                printf '%s\n' "$line" >> "$temp_file"
             fi
         done < "$gitignore_file"
         
@@ -63,9 +69,13 @@ update_gitignore() {
         log_step "Updated .gitignore block"
         
     else
+        if [[ "$has_start" == "true" ]] || [[ "$has_end" == "true" ]]; then
+            log_warning "Detected inconsistent .gitignore markers. Appending a fresh generated block."
+        fi
+
         # Markers do not exist: append to end
-        echo "" >> "$gitignore_file"
-        echo "$new_block" >> "$gitignore_file"
+        printf '\n' >> "$gitignore_file"
+        printf '%s\n' "$new_block" >> "$gitignore_file"
         log_step "Added generated block to .gitignore"
     fi
 }

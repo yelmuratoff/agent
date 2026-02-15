@@ -37,8 +37,16 @@ append_agentsync_block() {
         echo "$BLOCK_START"
         cat <<'EOF'
 if [ -f ".ai/system/sync.sh" ]; then
-    echo "Running AI Config Sync..."
-    .ai/system/sync.sh
+    echo "Running AI Config Sync (.ai/system)..."
+    bash .ai/system/sync.sh
+elif [ -f "agent/.ai/system/sync.sh" ]; then
+    echo "Running AI Config Sync (agent/.ai/system)..."
+    bash agent/.ai/system/sync.sh
+elif command -v dart >/dev/null 2>&1; then
+    echo "Running AI Config Sync (dart wrapper)..."
+    dart run agent_sync:agent_sync sync --project-dir .
+else
+    echo "AgentSync: no sync entrypoint found (.ai/system, agent/.ai/system, or dart)." >&2
 fi
 EOF
         echo "$BLOCK_END"

@@ -208,6 +208,29 @@ should_sync_tool() {
     return 0
 }
 
+run_post_sync_hook() {
+    local tool_name="$1"
+    local post_sync_cmd="$2"
+
+    if [[ -z "$post_sync_cmd" ]]; then
+        return 0
+    fi
+
+    if [[ "$SKIP_POST_SYNC" == "true" ]]; then
+        log_info "Skipping post-sync hook for $tool_name (AGENTSYNC_SKIP_POST_SYNC=true)"
+        return 0
+    fi
+
+    log_info "Running post-sync hook: $post_sync_cmd"
+    # Execute once through bash without eval to avoid re-parsing command input.
+    if ! (cd "$REPO_ROOT" && bash -lc "$post_sync_cmd"); then
+        log_warning "Post-sync hook failed"
+        return 1
+    fi
+
+    return 0
+}
+
 # Sync a single tool based on its YAML config
 sync_tool() {
     local tool_config="$1"
@@ -309,12 +332,8 @@ sync_tool() {
     local post_sync_cmd
     post_sync_cmd=$(parse_yaml_value "$tool_config" "post_sync") || true
     
-    if [[ -n "$post_sync_cmd" ]] && [[ "$DRY_RUN" != "true" ]] && [[ "$SKIP_POST_SYNC" != "true" ]]; then
-        log_info "Running post-sync hook: $post_sync_cmd"
-        # Eval command in repo root
-        (cd "$REPO_ROOT" && eval "$post_sync_cmd") || log_warning "Post-sync hook failed"
-    elif [[ -n "$post_sync_cmd" ]] && [[ "$SKIP_POST_SYNC" == "true" ]]; then
-        log_info "Skipping post-sync hook for $tool_name (AGENTSYNC_SKIP_POST_SYNC=true)"
+    if [[ "$DRY_RUN" != "true" ]]; then
+        run_post_sync_hook "$tool_name" "$post_sync_cmd" || true
     fi
      
     log_success "$tool_name complete"
@@ -389,6 +408,11 @@ main() {
     local generated_paths=""
     for tool_config in "$tools_dir_abs"/*.yaml; do
         [[ -f "$tool_config" ]] || continue
+        local tool_file_basename
+        tool_file_basename=$(basename "$tool_config")
+        if [[ "$tool_file_basename" == _* ]]; then
+            continue
+        fi
         ((TOTAL_COUNT++)) || true
         
         # Check enabled status for gitignore collection even if skipping sync (for dry-run accuracy we might need to think, 

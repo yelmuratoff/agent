@@ -31,6 +31,7 @@ source:
 ### Generated outputs
 
 Outputs are defined per tool in source `tools/*.yaml` (path configurable via source settings).
+Files prefixed with `_` (for example `_TEMPLATE.yaml`) are ignored during sync.
 
 Enabled/disabled tool outputs are controlled by each file's `enabled` flag in `tools/*.yaml`.
 
@@ -62,6 +63,11 @@ Install git hooks:
 ```bash
 .ai/system/setup_hooks.sh
 ```
+
+Installed hooks try, in order:
+- `.ai/system/sync.sh`
+- `agent/.ai/system/sync.sh`
+- `dart run agent_sync:agent_sync sync --project-dir .`
 
 Validation helper:
 
