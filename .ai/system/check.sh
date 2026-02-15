@@ -6,7 +6,15 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DEFAULT_REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="${AGENTSYNC_REPO_ROOT:-$DEFAULT_REPO_ROOT}"
+
+if [[ ! -d "$REPO_ROOT" ]]; then
+    echo "Error: Repository root not found: $REPO_ROOT" >&2
+    exit 1
+fi
+
+REPO_ROOT="$(cd "$REPO_ROOT" && pwd)"
 
 # Run sync in dry-run mode and check output
 # We can't rely just on dry-run exit code as it always returns 0

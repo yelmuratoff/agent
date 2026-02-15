@@ -2,7 +2,15 @@
 # Installs git hooks to automatically run .ai/sync/sync.sh on checkout and merge.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../" && pwd)"
+DEFAULT_REPO_ROOT="$(cd "$SCRIPT_DIR/../../" && pwd)"
+REPO_ROOT="${AGENTSYNC_REPO_ROOT:-$DEFAULT_REPO_ROOT}"
+
+if [[ ! -d "$REPO_ROOT" ]]; then
+    echo "Error: Repository root not found: $REPO_ROOT" >&2
+    exit 1
+fi
+
+REPO_ROOT="$(cd "$REPO_ROOT" && pwd)"
 HOOKS_DIR="$REPO_ROOT/.git/hooks"
 
 # Ensure hooks directory exists
